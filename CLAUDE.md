@@ -22,14 +22,16 @@ open index.html
 - 一次性安裝：`claude mcp add playwright npx @playwright/mcp@latest`
 - 每次互動明說「use playwright mcp to ...」，否則 Claude 會 fallback 去讀 HTML 純文字幻想結果。樣板：「use playwright mcp to open `file://.../index.html`, screenshot, click 下一個千年, screenshot again, report what changed」。
 
-## Current state (as of 2026-04-25)
-Day 0：骨架建好，尚未產出任何遊戲程式碼。下一步把 `prompts/step-1-time-and-horse.md` 貼給 Claude，存 artifact 為 `index.html`，先確認時間軸 + 馬匹年齡狀態機跑得起來。
+## Current state (as of 2026-04-26)
+**MVP code-complete**。`index.html` 全 3 step + 🟢 視覺層皆驗證通過：時間軸/馬齡狀態機/賽事/育種/黑市/突變劣化/Resurrect-64/VT323 全在線。下一步進入 playtest 階段，連玩 5 場填 `memory/playtest_notes.md`，依崩壞點調整數值（突變率/黑市價格/敵方強度），再決定 Frozen 解凍順序。
 
 ## Next actions
-- [ ] **Step 1：時間軸 + 馬匹物件** — 貼 `prompts/step-1-time-and-horse.md`，存 artifact
-- [ ] **Step 2：自動賽事** — 確認 Step 1 OK 後再貼 `prompts/step-2-races.md`
-- [ ] **Step 3：基因提純育種** — 確認 Step 2 OK 後再貼 `prompts/step-3-breeding.md`
-- [ ] **數值調校** — 三 step 跑通後寫 `memory/playtest_notes.md`，依紀錄回頭調
+- [x] **Step 1：時間軸 + 馬匹物件** — 已寫入 `index.html`，Claude_Preview 驗證通過
+- [x] **🟢 視覺層升級** — Resurrect-64 + VT323 + raise tokens + cubic-bezier easing
+- [x] **Step 2：自動賽事** — race-feed + race-btn + makeEnemy + ±20% variance
+- [x] **Step 3：基因提純育種** — 黑市 + 交配所 + 10%/5% 突變劣化 + 父母不消失
+- [ ] **Playtest Run #1** — 自己連玩 1 場 30 回合，記錄崩壞點到 `memory/playtest_notes.md`
+- [ ] **數值調校** — 依 playtest 一次只改一個變數（同變數多場再判）
 
 ## Frozen systems（MVP 期不做，違反前先停下來問本人）
 - **榮冠卡牌系統** — Why: 卡牌會與交配 / 賽事系統互相耦合，未驗證核心循環前加進去等於三系統一起重構。

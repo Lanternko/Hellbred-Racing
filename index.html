@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>地獄賽馬 · Hellbred Racing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Lospec Resurrect-64（精選 13 色） — 後續 Step 2/3 禁止再寫裸 hex，只用語意別名或 --c-N */
+    --c-0:  #2e222f;
+    --c-1:  #3e3546;
+    --c-2:  #625565;
+    --c-3:  #966c6c;
+    --c-4:  #ab947a;
+    --c-5:  #8b9bb4;
+    --c-6:  #c0cbdc;
+    --c-7:  #f2ae99;
+    --c-8:  #ad2f45;
+    --c-9:  #ea4f36;
+    --c-10: #f9c22b;
+    --c-11: #e8c170;
+    --c-12: #3ca370;
+
+    /* 語意別名 */
+    --bg: var(--c-0);
+    --bg-card: var(--c-1);
+    --border: var(--c-2);
+    --text: var(--c-6);
+    --text-dim: var(--c-5);
+    --accent: var(--c-8);
+    --accent-hover: var(--c-9);
+    --gold: var(--c-10);
+    --foal: var(--c-3);
+    --peak: var(--c-12);
+    --retired: var(--c-11);
+    --male: var(--c-5);
+    --female: var(--c-7);
+
+    /* Design tokens — Step 2/3 直接套用，禁止再寫 magic shadow */
+    --raise: inset 0 -3px 0 rgba(0,0,0,.35);
+    --raise-sm: inset 0 -2px 0 rgba(0,0,0,.3);
+    --drop: 0 2px 0 rgba(0,0,0,.4);
+    --drop-lg: 0 3px 0 rgba(0,0,0,.5);
+    --ease-snap: cubic-bezier(.36,.07,.19,.97);
+
+    /* Typography */
+    --font-mono: 'VT323', ui-monospace, 'SF Mono', 'PingFang TC', 'Noto Sans TC', monospace;
+    --font-body: 'PingFang TC', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    padding: 32px 24px;
+    line-height: 1.5;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 920px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 0.18em;
+    text-shadow: 2px 2px 0 rgba(0,0,0,.6);
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+  }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 18px 22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    box-shadow: var(--raise-sm), var(--drop);
+  }
+  .stat { display: flex; flex-direction: column; gap: 4px; }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.4em;
+    padding-left: 2px;
+  }
+  .stat-value {
+    font-family: var(--font-mono);
+    font-size: 32px;
+    line-height: 1;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+  .stat-value.gold { color: var(--gold); }
+  .stat-sub {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--text-dim);
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  button.primary {
+    margin-left: auto;
+    padding: 13px 24px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid var(--c-9);
+    border-radius: 4px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    transition: background 0.15s var(--ease-snap),
+                transform 0.08s var(--ease-snap),
+                box-shadow 0.08s var(--ease-snap);
+    box-shadow: var(--raise), var(--drop-lg);
+  }
+  button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+  button.primary:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: var(--raise-sm), 0 1px 0 rgba(0,0,0,.5);
+  }
+  button.primary:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    cursor: not-allowed;
+    color: var(--text-dim);
+    box-shadow: var(--raise-sm);
+  }
+
+  .section-title {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.4em;
+    margin-bottom: 12px;
+    padding-left: 2px;
+  }
+
+  .horse-list { display: flex; flex-direction: column; gap: 10px; }
+  .horse-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: var(--raise-sm), var(--drop);
+  }
+  .horse-info { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .horse-name-row { display: flex; align-items: center; gap: 12px; }
+  .horse-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+  .gender {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    background: rgba(0,0,0,.35);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    box-shadow: var(--raise-sm);
+  }
+  .gender.male { color: var(--male); }
+  .gender.female { color: var(--female); }
+
+  .stats-row {
+    display: flex;
+    gap: 22px;
+    align-items: baseline;
+  }
+  .stat-pill {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+  }
+  .stat-pill strong {
+    font-family: var(--font-mono);
+    font-size: 19px;
+    color: var(--text);
+    font-weight: 400;
+    margin-left: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .horse-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .age {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--text);
+  }
+  .status {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.25em;
+    font-weight: 700;
+    box-shadow: var(--raise-sm);
+  }
+  .status.foal { background: var(--foal); color: var(--c-0); }
+  .status.peak { background: var(--peak); color: var(--c-0); }
+  .status.retired { background: var(--retired); color: var(--c-0); }
+
+  .empty {
+    padding: 36px;
+    text-align: center;
+    color: var(--text-dim);
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+  }
+
+  .log {
+    margin-top: 20px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--text-dim);
+    max-height: 180px;
+    overflow-y: auto;
+    box-shadow: var(--raise-sm);
+    line-height: 1.4;
+  }
+  .log-entry { padding: 1px 0; }
+  .log-entry.death { color: var(--accent-hover); }
+
+  /* 賽事播報 */
+  .race-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+  .race-empty {
+    padding: 18px;
+    text-align: center;
+    color: var(--text-dim);
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+  .race-entry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left-width: 3px;
+    border-radius: 4px;
+    align-items: baseline;
+    box-shadow: var(--raise-sm);
+  }
+  .race-entry.win { border-left-color: var(--peak); }
+  .race-entry.loss { border-left-color: var(--accent); }
+  .race-year {
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+  .race-matchup {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 17px;
+    color: var(--text);
+    min-width: 0;
+  }
+  .race-matchup .player { color: var(--gold); font-weight: 700; }
+  .race-matchup .enemy { color: var(--text-dim); }
+  .race-matchup .score {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+  .race-matchup .vs {
+    color: var(--text-dim);
+    margin: 0 8px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    font-family: var(--font-body);
+  }
+  .race-verdict {
+    font-size: 11px;
+    padding: 3px 12px;
+    border-radius: 2px;
+    letter-spacing: 0.3em;
+    font-weight: 700;
+    box-shadow: var(--raise-sm);
+  }
+  .race-verdict.win { background: var(--peak); color: var(--c-0); }
+  .race-verdict.loss { background: var(--accent); color: #fff; }
+  .race-reward {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .race-reward.win { color: var(--gold); }
+  .race-reward.loss { color: var(--text-dim); }
+
+  .race-btn {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 9px 14px 11px;
+    background: var(--gold);
+    color: var(--c-0);
+    border: 1px solid var(--c-11);
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    transition: background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap),
+                box-shadow 0.08s var(--ease-snap);
+    box-shadow: var(--raise-sm), var(--drop);
+    white-space: nowrap;
+  }
+  .race-btn:hover:not(:disabled) { background: var(--c-11); }
+  .race-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.3);
+  }
+  .race-btn:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: var(--raise-sm);
+  }
+
+  /* 黑市 */
+  .market-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .market-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--c-3);
+    border-radius: 4px;
+    box-shadow: var(--raise-sm), var(--drop);
+  }
+  .market-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+    min-width: 80px;
+  }
+  .price {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    color: var(--gold);
+    font-weight: 700;
+    line-height: 1;
+  }
+  .buy-btn {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 9px 14px 11px;
+    background: var(--c-9);
+    color: #fff;
+    border: 1px solid var(--c-9);
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    transition: background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap),
+                box-shadow 0.08s var(--ease-snap);
+    box-shadow: var(--raise-sm), var(--drop);
+    white-space: nowrap;
+  }
+  .buy-btn:hover:not(:disabled) { filter: brightness(1.1); }
+  .buy-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.3);
+  }
+  .buy-btn:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: var(--raise-sm);
+  }
+
+  /* 交配所 */
+  .breeding-panel {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: var(--raise-sm), var(--drop);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .breeding-select {
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 9px 12px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    flex: 1;
+    min-width: 180px;
+    cursor: pointer;
+  }
+  .breeding-select:focus { outline: 1px solid var(--accent); outline-offset: 1px; }
+  .breeding-select:disabled { opacity: 0.5; cursor: not-allowed; }
+  .breed-cross {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    color: var(--text-dim);
+    padding: 0 4px;
+  }
+  .breed-btn {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 11px 18px 13px;
+    background: var(--c-7);
+    color: var(--c-0);
+    border: 1px solid var(--c-7);
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    transition: background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap),
+                box-shadow 0.08s var(--ease-snap);
+    box-shadow: var(--raise-sm), var(--drop);
+    white-space: nowrap;
+  }
+  .breed-btn:hover:not(:disabled) { filter: brightness(1.1); }
+  .breed-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.3);
+  }
+  .breed-btn:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: var(--raise-sm);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>地獄賽馬</h1>
+    <span class="subtitle">HELLBRED RACING · 為惡魔之王培育頂尖坐騎</span>
+  </header>
+
+  <div class="top-bar">
+    <div class="stat">
+      <span class="stat-label">紀年</span>
+      <span class="stat-value" id="year">0 / 30,000</span>
+      <span class="stat-sub" id="year-sub">剩 30 千年</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">資金</span>
+      <span class="stat-value gold" id="money">1,000 G</span>
+    </div>
+    <button class="primary" id="next-turn">下一個千年</button>
+  </div>
+
+  <div class="section-title">賽事播報</div>
+  <div class="race-feed" id="race-feed"></div>
+
+  <div class="section-title">馬廄</div>
+  <div class="horse-list" id="horse-list"></div>
+
+  <div class="section-title">交配所</div>
+  <div class="breeding-panel">
+    <select class="breeding-select" id="breed-father">
+      <option value="">— 公馬 —</option>
+    </select>
+    <span class="breed-cross">×</span>
+    <select class="breeding-select" id="breed-mother">
+      <option value="">— 母馬 —</option>
+    </select>
+    <button class="breed-btn" id="breed-btn" disabled>交配</button>
+  </div>
+
+  <div class="section-title">黑市</div>
+  <div class="market-list" id="market-list"></div>
+
+  <div class="log" id="log"></div>
+</div>
+
+<script>
+  const NAMES = [
+    '焰蹄', '黑曜', '冥淵', '血鬃', '灰燼',
+    '死霧', '紅蓮', '夜煞', '骸骨', '硫磺',
+    '深淵', '魔影', '焦土', '炙風', '鏽刃',
+    '玄鐵', '殞星', '霜火', '罪業', '鴉啼',
+    '焚天', '裂魂', '蝕骨', '燼火', '冥途'
+  ];
+
+  const ENEMY_NAMES = [
+    '鬼面', '渡鴉', '夜叉', '魔僕', '無常',
+    '獄卒', '咆哮', '炎魔', '邪光', '骨刃',
+    '腐骸', '黑焰', '殞靈', '夜梟', '幽煞'
+  ];
+
+  const STATE_FOAL = 'foal';
+  const STATE_PEAK = 'peak';
+  const STATE_RETIRED = 'retired';
+  const STATE_LABEL = { foal: '幼駒', peak: '巔峰', retired: '退役' };
+
+  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+  const randInt = (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo;
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  function statusFromAge(age) {
+    if (age <= 0) return STATE_FOAL;
+    if (age <= 3) return STATE_PEAK;
+    return STATE_RETIRED;
+  }
+
+  const usedNames = new Set();
+  function uniqueName() {
+    const pool = NAMES.filter(n => !usedNames.has(n));
+    if (!pool.length) {
+      usedNames.clear();
+      return uniqueName();
+    }
+    const name = pick(pool);
+    usedNames.add(name);
+    return name;
+  }
+
+  function makeHorse({ age = 0 } = {}) {
+    const a = Math.max(0, Math.floor(age));
+    return {
+      id: (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()),
+      name: uniqueName(),
+      gender: Math.random() < 0.5 ? 'male' : 'female',
+      age: a,
+      speed: clamp(randInt(30, 70), 1, 100),
+      power: clamp(randInt(30, 70), 1, 100),
+      stamina: clamp(randInt(30, 70), 1, 100),
+      status: statusFromAge(a),
+      racedThisTurn: false
+    };
+  }
+
+  function totalStats(h) { return h.speed + h.power + h.stamina; }
+
+  function makeEnemy() {
+    const turn = game.yearsElapsed / game.yearPerTurn;
+    const base = Math.floor(turn * 1.5);
+    const stat = () => clamp(randInt(20 + base, 40 + base), 1, 100);
+    return {
+      name: pick(ENEMY_NAMES),
+      speed: stat(),
+      power: stat(),
+      stamina: stat()
+    };
+  }
+
+  function makeMarketHorse() {
+    const turn = game.yearsElapsed / game.yearPerTurn;
+    const lo = Math.min(35 + Math.floor(turn), 60);
+    const hi = Math.min(70 + Math.floor(turn), 95);
+    const stat = () => clamp(randInt(lo, hi), 1, 100);
+    const speed = stat(), power = stat(), stamina = stat();
+    const total = speed + power + stamina;
+    return {
+      id: (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()),
+      name: uniqueName(),
+      gender: Math.random() < 0.5 ? 'male' : 'female',
+      age: 4,
+      speed, power, stamina,
+      status: STATE_RETIRED,
+      racedThisTurn: false,
+      price: total * 5 + randInt(100, 400)
+    };
+  }
+
+  const STAT_LABEL = { speed: '速度', power: '力量', stamina: '體力' };
+  const MUTATION_RATE = 0.10;
+  const DEGENERATION_RATE = 0.05;
+
+  const game = {
+    yearsElapsed: 0,
+    maxYears: 30000,
+    yearPerTurn: 1000,
+    money: 1000,
+    horses: [],
+    market: [],
+    races: [],
+    log: []
+  };
+
+  function init() {
+    game.horses = [
+      makeHorse({ age: 0 }),
+      makeHorse({ age: 1 }),
+      makeHorse({ age: 3 })
+    ];
+    game.market = Array.from({ length: 4 }, makeMarketHorse);
+    addLog(`紀年 0 · 馬廄入駐 ${game.horses.length} 匹馬，等候千年的審判。`);
+    render();
+  }
+
+  function nextTurn() {
+    if (game.yearsElapsed >= game.maxYears) return;
+    game.yearsElapsed += game.yearPerTurn;
+
+    for (const h of game.horses) {
+      h.age += 1;
+      h.status = statusFromAge(h.age);
+      h.racedThisTurn = false;
+    }
+    const dead = [];
+    for (let i = game.horses.length - 1; i >= 0; i--) {
+      if (game.horses[i].age >= 5) {
+        dead.push(game.horses.splice(i, 1)[0]);
+      }
+    }
+
+    game.market = Array.from({ length: 4 }, makeMarketHorse);
+
+    addLog(`紀年 ${game.yearsElapsed.toLocaleString()} · 千年流逝。`);
+    if (dead.length) {
+      addLog(`離世：${dead.map(h => h.name).join('、')}（5 歲）`, 'death');
+    }
+    if (game.yearsElapsed >= game.maxYears) {
+      addLog(`時辰已盡 · 30 個千年皆已過去。`);
+    }
+    render();
+  }
+
+  function buyMarketHorse(marketId) {
+    const idx = game.market.findIndex(m => m.id === marketId);
+    if (idx < 0) return;
+    const horse = game.market[idx];
+    if (game.money < horse.price) return;
+    const price = horse.price;
+    delete horse.price;
+    game.money -= price;
+    game.horses.push(horse);
+    game.market.splice(idx, 1);
+    addLog(`購入：${horse.name}（${horse.gender === 'male' ? '公' : '母'}） −${price.toLocaleString()}G`);
+    render();
+  }
+
+  function breed(fatherId, motherId) {
+    const father = game.horses.find(h => h.id === fatherId);
+    const mother = game.horses.find(h => h.id === motherId);
+    if (!father || !mother) return;
+    if (father.status !== STATE_RETIRED || mother.status !== STATE_RETIRED) return;
+    if (father.gender !== 'male' || mother.gender !== 'female') return;
+
+    const events = [];
+    const breedStat = (key) => {
+      const base = Math.round((father[key] + mother[key]) / 2);
+      const roll = Math.random();
+      if (roll < MUTATION_RATE) {
+        events.push(`${STAT_LABEL[key]}突變+20`);
+        return clamp(base + 20, 1, 100);
+      }
+      if (roll < MUTATION_RATE + DEGENERATION_RATE) {
+        events.push(`${STAT_LABEL[key]}劣化-15`);
+        return clamp(base - 15, 1, 100);
+      }
+      return clamp(base, 1, 100);
+    };
+
+    const child = {
+      id: (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()),
+      name: uniqueName(),
+      gender: Math.random() < 0.5 ? 'male' : 'female',
+      age: 0,
+      speed: breedStat('speed'),
+      power: breedStat('power'),
+      stamina: breedStat('stamina'),
+      status: STATE_FOAL,
+      racedThisTurn: false
+    };
+    game.horses.push(child);
+
+    const eventStr = events.length ? `〔${events.join('、')}〕` : '';
+    addLog(`交配：${father.name} × ${mother.name} → ${child.name}（${child.gender === 'male' ? '公' : '母'}） ${eventStr}`);
+    render();
+  }
+
+  function runRace(horseId) {
+    const h = game.horses.find(x => x.id === horseId);
+    if (!h || h.status !== STATE_PEAK || h.racedThisTurn) return;
+
+    const enemy = makeEnemy();
+    const variance = () => 0.8 + Math.random() * 0.4;
+    const playerScore = totalStats(h) * variance();
+    const enemyScore = totalStats(enemy) * variance();
+
+    const won = playerScore >= enemyScore;
+    const reward = won ? 500 : 100;
+    game.money += reward;
+    h.racedThisTurn = true;
+
+    game.races.unshift({
+      year: game.yearsElapsed,
+      player: { name: h.name, total: totalStats(h), score: Math.round(playerScore) },
+      enemy: { name: enemy.name, total: totalStats(enemy), score: Math.round(enemyScore) },
+      won,
+      reward
+    });
+    if (game.races.length > 5) game.races.length = 5;
+
+    addLog(
+      `賽事 · ${h.name} ${won ? '擊敗' : '不敵'} ${enemy.name}（+${reward}G）`,
+      won ? '' : 'death'
+    );
+    render();
+  }
+
+  function addLog(text, kind = '') {
+    game.log.unshift({ text, kind });
+    if (game.log.length > 30) game.log.length = 30;
+  }
+
+  function render() {
+    const remaining = (game.maxYears - game.yearsElapsed) / game.yearPerTurn;
+    document.getElementById('year').textContent =
+      `${game.yearsElapsed.toLocaleString()} / 30,000`;
+    document.getElementById('year-sub').textContent =
+      remaining > 0 ? `剩 ${remaining} 千年` : '終局';
+    document.getElementById('money').textContent = `${game.money.toLocaleString()} G`;
+
+    const btn = document.getElementById('next-turn');
+    btn.disabled = game.yearsElapsed >= game.maxYears;
+    btn.textContent = btn.disabled ? '時辰已盡' : '下一個千年';
+
+    const feed = document.getElementById('race-feed');
+    if (!game.races.length) {
+      feed.innerHTML = `<div class="race-empty">尚未開戰，遣巔峰馬出戰即可賺取黃金。</div>`;
+    } else {
+      feed.innerHTML = game.races.map(r => `
+        <div class="race-entry ${r.won ? 'win' : 'loss'}">
+          <span class="race-year">紀年 ${r.year.toLocaleString()}</span>
+          <span class="race-matchup">
+            <span class="player">${r.player.name}</span><span class="score">[${r.player.score}]</span>
+            <span class="vs">VS</span>
+            <span class="enemy">${r.enemy.name}</span><span class="score">[${r.enemy.score}]</span>
+          </span>
+          <span class="race-verdict ${r.won ? 'win' : 'loss'}">${r.won ? '勝' : '敗'}</span>
+          <span class="race-reward ${r.won ? 'win' : 'loss'}">+${r.reward}G</span>
+        </div>
+      `).join('');
+    }
+
+    const fatherSel = document.getElementById('breed-father');
+    const motherSel = document.getElementById('breed-mother');
+    const breedBtnEl = document.getElementById('breed-btn');
+    const prevFather = fatherSel.value;
+    const prevMother = motherSel.value;
+    const males = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'male');
+    const females = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'female');
+    const optionFor = h => `<option value="${h.id}">${h.name} ｜ ${h.speed}/${h.power}/${h.stamina}</option>`;
+    fatherSel.innerHTML = `<option value="">— 公馬 —</option>` + males.map(optionFor).join('');
+    motherSel.innerHTML = `<option value="">— 母馬 —</option>` + females.map(optionFor).join('');
+    if (males.find(h => h.id === prevFather)) fatherSel.value = prevFather;
+    if (females.find(h => h.id === prevMother)) motherSel.value = prevMother;
+    fatherSel.disabled = !males.length;
+    motherSel.disabled = !females.length;
+    breedBtnEl.disabled = !(fatherSel.value && motherSel.value);
+
+    const marketList = document.getElementById('market-list');
+    if (!game.market.length) {
+      marketList.innerHTML = `<div class="empty">黑市清空，待下一個千年補貨。</div>`;
+    } else {
+      marketList.innerHTML = game.market.map(m => `
+        <div class="market-card">
+          <div class="horse-info">
+            <div class="horse-name-row">
+              <span class="horse-name">${m.name}</span>
+              <span class="gender ${m.gender}">${m.gender === 'male' ? '公' : '母'}</span>
+            </div>
+            <div class="stats-row">
+              <span class="stat-pill">速度 <strong>${m.speed}</strong></span>
+              <span class="stat-pill">力量 <strong>${m.power}</strong></span>
+              <span class="stat-pill">體力 <strong>${m.stamina}</strong></span>
+            </div>
+          </div>
+          <div class="market-meta">
+            <span class="price">${m.price.toLocaleString()} G</span>
+            <span class="status retired">退役</span>
+          </div>
+          <button class="buy-btn" data-mid="${m.id}" ${game.money < m.price ? 'disabled' : ''}>${game.money < m.price ? '黃金不足' : '購入'}</button>
+        </div>
+      `).join('');
+    }
+
+    const list = document.getElementById('horse-list');
+    if (!game.horses.length) {
+      list.innerHTML = `<div class="empty">馬廄空無一物。</div>`;
+    } else {
+      list.innerHTML = game.horses.map(h => {
+        const canRace = h.status === STATE_PEAK;
+        const raceBtn = canRace
+          ? `<button class="race-btn" data-id="${h.id}" ${h.racedThisTurn ? 'disabled' : ''}>${h.racedThisTurn ? '已參賽' : '參加賽事'}</button>`
+          : '';
+        return `
+          <div class="horse-card" data-id="${h.id}">
+            <div class="horse-info">
+              <div class="horse-name-row">
+                <span class="horse-name">${h.name}</span>
+                <span class="gender ${h.gender}">${h.gender === 'male' ? '公' : '母'}</span>
+              </div>
+              <div class="stats-row">
+                <span class="stat-pill">速度 <strong>${h.speed}</strong></span>
+                <span class="stat-pill">力量 <strong>${h.power}</strong></span>
+                <span class="stat-pill">體力 <strong>${h.stamina}</strong></span>
+              </div>
+            </div>
+            <div class="horse-meta">
+              <span class="age">${h.age} 歲</span>
+              <span class="status ${h.status}">${STATE_LABEL[h.status]}</span>
+            </div>
+            ${raceBtn}
+          </div>
+        `;
+      }).join('');
+    }
+
+    const logEl = document.getElementById('log');
+    logEl.innerHTML = game.log
+      .map(l => `<div class="log-entry ${l.kind}">› ${l.text}</div>`)
+      .join('');
+  }
+
+  document.getElementById('next-turn').addEventListener('click', nextTurn);
+  document.getElementById('horse-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('.race-btn');
+    if (!btn || btn.disabled) return;
+    runRace(btn.dataset.id);
+  });
+  document.getElementById('market-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('.buy-btn');
+    if (!btn || btn.disabled) return;
+    buyMarketHorse(btn.dataset.mid);
+  });
+  const fatherSel = document.getElementById('breed-father');
+  const motherSel = document.getElementById('breed-mother');
+  const breedBtnEl = document.getElementById('breed-btn');
+  const updateBreedBtn = () => {
+    breedBtnEl.disabled = !(fatherSel.value && motherSel.value);
+  };
+  fatherSel.addEventListener('change', updateBreedBtn);
+  motherSel.addEventListener('change', updateBreedBtn);
+  breedBtnEl.addEventListener('click', () => {
+    if (!fatherSel.value || !motherSel.value) return;
+    breed(fatherSel.value, motherSel.value);
+  });
+  init();
+</script>
+</body>
+</html>
