@@ -1,0 +1,21 @@
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+.credentials*
+secrets/
+
+# Build / deps (preemptive — if later adds Node tooling)
+dist/
+build/
+.cache/
+node_modules/
+*.log
