@@ -489,6 +489,40 @@
     cursor: not-allowed;
     box-shadow: var(--raise-sm);
   }
+
+  /* OVR / 突變視覺 / 馬廄折疊 */
+  .ovr {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    color: var(--gold);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
+  .stat-pill.mut strong { color: var(--accent-hover); }
+  .stat-pill.mut { color: var(--accent-hover); }
+  .stable-toggle {
+    margin-top: 4px;
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    cursor: pointer;
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    font-weight: 600;
+    transition: border-color 0.12s var(--ease-snap),
+                color 0.12s var(--ease-snap),
+                background 0.12s var(--ease-snap);
+  }
+  .stable-toggle:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+    background: rgba(0,0,0,.15);
+  }
 </style>
 </head>
 <body>
@@ -588,7 +622,8 @@
       power: clamp(randInt(30, 70), 1, 100),
       stamina: clamp(randInt(30, 70), 1, 100),
       status: statusFromAge(a),
-      racedThisTurn: false
+      racedThisTurn: false,
+      bredThisTurn: false
     };
   }
 
@@ -621,6 +656,7 @@
       speed, power, stamina,
       status: STATE_RETIRED,
       racedThisTurn: false,
+      bredThisTurn: false,
       price: total * 5 + randInt(100, 400)
     };
   }
@@ -628,6 +664,11 @@
   const STAT_LABEL = { speed: '速度', power: '力量', stamina: '體力' };
   const MUTATION_RATE = 0.10;
   const DEGENERATION_RATE = 0.05;
+  const POPULATION_MEAN = 50;
+  const REGRESSION_PULL = 0.2;
+  const BREED_NOISE = 20;
+
+  const ovrOf = h => Math.round((h.speed + h.power + h.stamina) / 3);
 
   const game = {
     yearsElapsed: 0,
@@ -637,7 +678,8 @@
     horses: [],
     market: [],
     races: [],
-    log: []
+    log: [],
+    stableExpanded: false
   };
 
   function init() {
@@ -659,6 +701,7 @@
       h.age += 1;
       h.status = statusFromAge(h.age);
       h.racedThisTurn = false;
+      h.bredThisTurn = false;
     }
     const dead = [];
     for (let i = game.horses.length - 1; i >= 0; i--) {
@@ -701,18 +744,22 @@
     if (father.gender !== 'male' || mother.gender !== 'female') return;
 
     const events = [];
+    const mutated = { speed: false, power: false, stamina: false };
     const breedStat = (key) => {
-      const base = Math.round((father[key] + mother[key]) / 2);
+      const midpoint = (father[key] + mother[key]) / 2;
+      const regressed = midpoint * (1 - REGRESSION_PULL) + POPULATION_MEAN * REGRESSION_PULL;
+      const noise = (Math.random() - 0.5) * BREED_NOISE;
+      let stat = regressed + noise;
       const roll = Math.random();
       if (roll < MUTATION_RATE) {
         events.push(`${STAT_LABEL[key]}突變+20`);
-        return clamp(base + 20, 1, 100);
-      }
-      if (roll < MUTATION_RATE + DEGENERATION_RATE) {
+        mutated[key] = true;
+        stat += 20;
+      } else if (roll < MUTATION_RATE + DEGENERATION_RATE) {
         events.push(`${STAT_LABEL[key]}劣化-15`);
-        return clamp(base - 15, 1, 100);
+        stat -= 15;
       }
-      return clamp(base, 1, 100);
+      return clamp(Math.round(stat), 1, 100);
     };
 
     const child = {
@@ -724,9 +771,12 @@
       power: breedStat('power'),
       stamina: breedStat('stamina'),
       status: STATE_FOAL,
-      racedThisTurn: false
+      racedThisTurn: false,
+      bredThisTurn: false,
+      mutated
     };
     game.horses.push(child);
+    mother.bredThisTurn = true;
 
     const eventStr = events.length ? `〔${events.join('、')}〕` : '';
     addLog(`交配：${father.name} × ${mother.name} → ${child.name}（${child.gender === 'male' ? '公' : '母'}） ${eventStr}`);
@@ -804,7 +854,7 @@
     const prevFather = fatherSel.value;
     const prevMother = motherSel.value;
     const males = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'male');
-    const females = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'female');
+    const females = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'female' && !h.bredThisTurn);
     const optionFor = h => `<option value="${h.id}">${h.name} ｜ ${h.speed}/${h.power}/${h.stamina}</option>`;
     fatherSel.innerHTML = `<option value="">— 公馬 —</option>` + males.map(optionFor).join('');
     motherSel.innerHTML = `<option value="">— 母馬 —</option>` + females.map(optionFor).join('');
@@ -832,6 +882,7 @@
             </div>
           </div>
           <div class="market-meta">
+            <span class="ovr">OVR ${ovrOf(m)}</span>
             <span class="price">${m.price.toLocaleString()} G</span>
             <span class="status retired">退役</span>
           </div>
@@ -844,11 +895,17 @@
     if (!game.horses.length) {
       list.innerHTML = `<div class="empty">馬廄空無一物。</div>`;
     } else {
-      list.innerHTML = game.horses.map(h => {
+      const sorted = [...game.horses].sort((a, b) => ovrOf(b) - ovrOf(a));
+      const showAll = game.stableExpanded || sorted.length <= 5;
+      const visible = showAll ? sorted : sorted.slice(0, 5);
+      const hiddenCount = sorted.length - visible.length;
+
+      const cards = visible.map(h => {
         const canRace = h.status === STATE_PEAK;
         const raceBtn = canRace
           ? `<button class="race-btn" data-id="${h.id}" ${h.racedThisTurn ? 'disabled' : ''}>${h.racedThisTurn ? '已參賽' : '參加賽事'}</button>`
           : '';
+        const mut = h.mutated || {};
         return `
           <div class="horse-card" data-id="${h.id}">
             <div class="horse-info">
@@ -857,12 +914,13 @@
                 <span class="gender ${h.gender}">${h.gender === 'male' ? '公' : '母'}</span>
               </div>
               <div class="stats-row">
-                <span class="stat-pill">速度 <strong>${h.speed}</strong></span>
-                <span class="stat-pill">力量 <strong>${h.power}</strong></span>
-                <span class="stat-pill">體力 <strong>${h.stamina}</strong></span>
+                <span class="stat-pill ${mut.speed ? 'mut' : ''}">速度 <strong>${h.speed}</strong></span>
+                <span class="stat-pill ${mut.power ? 'mut' : ''}">力量 <strong>${h.power}</strong></span>
+                <span class="stat-pill ${mut.stamina ? 'mut' : ''}">體力 <strong>${h.stamina}</strong></span>
               </div>
             </div>
             <div class="horse-meta">
+              <span class="ovr">OVR ${ovrOf(h)}</span>
               <span class="age">${h.age} 歲</span>
               <span class="status ${h.status}">${STATE_LABEL[h.status]}</span>
             </div>
@@ -870,6 +928,12 @@
           </div>
         `;
       }).join('');
+
+      const toggle = sorted.length > 5
+        ? `<button class="stable-toggle" id="stable-toggle">${game.stableExpanded ? '‹ 收合' : `› 展開（隱藏 ${hiddenCount} 匹）`}</button>`
+        : '';
+
+      list.innerHTML = cards + toggle;
     }
 
     const logEl = document.getElementById('log');
@@ -880,9 +944,16 @@
 
   document.getElementById('next-turn').addEventListener('click', nextTurn);
   document.getElementById('horse-list').addEventListener('click', (e) => {
-    const btn = e.target.closest('.race-btn');
-    if (!btn || btn.disabled) return;
-    runRace(btn.dataset.id);
+    const raceBtn = e.target.closest('.race-btn');
+    if (raceBtn && !raceBtn.disabled) {
+      runRace(raceBtn.dataset.id);
+      return;
+    }
+    const toggle = e.target.closest('.stable-toggle');
+    if (toggle) {
+      game.stableExpanded = !game.stableExpanded;
+      render();
+    }
   });
   document.getElementById('market-list').addEventListener('click', (e) => {
     const btn = e.target.closest('.buy-btn');
