@@ -863,6 +863,37 @@
   .modal-horse-ovr  { font-family: var(--font-mono); font-size: 20px; color: var(--gold); line-height: 1; white-space: nowrap; }
   .modal-empty { padding: 28px; text-align: center; color: var(--text-dim); font-size: 13px; }
 
+  /* Stage D — 活動 / 印記 三選一 */
+  .choice-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .choice-card {
+    background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 4px;
+    padding: 16px 12px; cursor: pointer; transition: all 0.15s;
+    display: flex; flex-direction: column; gap: 8px; min-height: 140px;
+  }
+  .choice-card:hover { border-color: var(--accent); background: rgba(255,255,255,.04); transform: translateY(-2px); }
+  .choice-card-title { font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: var(--gold); }
+  .choice-card-kind {
+    font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim);
+    border: 1px solid var(--border); padding: 2px 6px; border-radius: 2px;
+    align-self: flex-start; text-transform: uppercase;
+  }
+  .choice-card-desc { font-size: 12px; color: var(--text); line-height: 1.5; }
+  .choice-card-target { font-size: 11px; color: var(--text-dim); margin-top: auto; font-style: italic; }
+  @media (max-width: 600px) {
+    .choice-cards { grid-template-columns: 1fr; }
+  }
+
+  /* Stage D — 印記 badge */
+  .mark-badge {
+    font-size: 10px; padding: 2px 6px; border-radius: 2px;
+    background: linear-gradient(135deg, #b8932f, #f0c75e);
+    color: #0d0e12; font-weight: 700; letter-spacing: 0.1em;
+    border: 1px solid #d4a843;
+    text-shadow: 0 0 2px rgba(0,0,0,.3);
+  }
+  .stable-cap { font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em; }
+  .stable-cap.full { color: #d96666; }
+
   /* 馬匹清單按鈕 */
   .roster-btn {
     padding: 7px 14px 9px;
@@ -1239,7 +1270,7 @@
   <div id="major-event-banner" class="major-event-banner" style="display:none">⚡ 千年大典 · 賽事獎金加倍、勝者獲賜技能</div>
 
   <div class="section-header">
-    <div class="section-title">馬廄</div>
+    <div class="section-title">馬廄 <span class="stable-cap" id="stable-cap"></span></div>
     <button class="all-race-btn" id="all-race-btn" disabled>全員出戰</button>
   </div>
   <div class="horse-list" id="horse-list"></div>
@@ -1305,6 +1336,17 @@
 <div class="fab-actions">
   <button class="fab-omni state-race" id="fab-omni">全體出戰</button>
   <button class="fab-next" id="fab-next">下一年</button>
+</div>
+
+<div id="choice-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="choice-modal-title">三 選 一</span>
+    </div>
+    <div class="modal-body">
+      <div class="choice-cards" id="choice-cards"></div>
+    </div>
+  </div>
 </div>
 
 <div id="horse-modal" class="modal-overlay">
@@ -1374,6 +1416,8 @@
       bredThisTurn: false,
       skill: null,
       traits: { displayed, recessiveFlags },
+      marks: [],
+      marksRecessive: [],
       parents: null,
     };
   }
@@ -1404,23 +1448,26 @@
     const stat = () => clamp(randInt(lo, hi), 1, 100);
     const speed = stat(), power = stat(), stamina = stat();
     const total = speed + power + stamina;
+    const mAge = randInt(1, 4);
     const mOrigin = randomOrigin();
     const { surname: mSurname, givenName: mGiven, name: mName } = generateHorseName(mOrigin);
     return {
       id: (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()),
       origin: mOrigin, surname: mSurname, givenName: mGiven, name: mName,
       gender: Math.random() < 0.5 ? 'male' : 'female',
-      age: 4,
+      age: mAge,
       speed, power, stamina,
-      status: STATE_RETIRED,
+      status: statusFromAge(mAge),
       racedThisTurn: false,
       bredThisTurn: false,
-      price: Math.round(total * total / 70) + randInt(50, 150),
+      price: Math.max(1, Math.round(total / 25) + randInt(0, 2)),
       skill: null,
       traits: {
         displayed: Math.random() < 0.12 ? [{ id: pick(RED_IDS), type:'red' }] : [],
         recessiveFlags: [pick(BLUE_IDS)],
       },
+      marks: [],
+      marksRecessive: [],
     };
   }
 
@@ -1461,6 +1508,89 @@
     G01: { id:'G01', type:'gold', name:'地獄之王', desc:'Ragnarök 中所有屬性視為匹配' },
     G02: { id:'G02', type:'gold', name:'鳳凰之血', desc:'死亡時 30% 機率以幼駒姿態重生（一次性）' },
   };
+
+  const MARK_DATA = {
+    M01: { id:'M01', name:'無瑕之眼', desc:'速度上限突破至 115（即刻 +15、上限 100→115）' },
+    M02: { id:'M02', name:'戰神血脈', desc:'大典中三圍視為 +10（速/力/體 各 +10）' },
+  };
+  const MARK_IDS = ['M01', 'M02'];
+
+  const EVENT_CARDS = [
+    { id:'E_B01', kind:'trait', traitId:'B01', title:'蹄炎傳承', desc:'將藍特「蹄炎」(火焰賽道+8%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_B02', kind:'trait', traitId:'B02', title:'冰晶傳承', desc:'將藍特「冰晶體質」(冰雪賽道+8%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_B03', kind:'trait', traitId:'B03', title:'沙漠傳承', desc:'將藍特「沙漠之子」(沙漠賽道+8%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_B04', kind:'trait', traitId:'B04', title:'鐵蹄傳承', desc:'將藍特「鐵蹄」(爬山地形+10%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_B05', kind:'trait', traitId:'B05', title:'疾風傳承', desc:'將藍特「疾風步」(長平原+10%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_B06', kind:'trait', traitId:'B06', title:'起伏傳承', desc:'將藍特「起伏直覺」(起伏地形+10%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_RARE', kind:'marketBuff', title:'稀有馬場', desc:'下個千年的黑市馬匹三圍全部 +15。' },
+    { id:'E_GOLD', kind:'gold', amount:5, title:'黃金祭壇', desc:'立即獲得 5G。' },
+  ];
+
+  function makeEventChoice() {
+    // 從 EVENT_CARDS pool 抽 3 張不重覆
+    const pool = [...EVENT_CARDS];
+    const cards = [];
+    for (let i = 0; i < 3 && pool.length; i++) {
+      const idx = Math.floor(Math.random() * pool.length);
+      cards.push(pool.splice(idx, 1)[0]);
+    }
+    return { kind: 'event', cards };
+  }
+
+  function applyChoiceCard(card) {
+    if (card.kind === 'trait') {
+      // 套用至 OVR 最高且尚未持有此特性的現役馬
+      const candidates = game.horses
+        .filter(h => h.traits && !h.traits.displayed.some(t => t.id === card.traitId))
+        .sort((a, b) => ovrOf(b) - ovrOf(a));
+      if (!candidates.length) {
+        addLog(`活動「${card.title}」無對象可施加（馬廄空或全員已有此特性）`, 'death');
+        return;
+      }
+      const target = candidates[0];
+      target.traits.displayed.push({ id: card.traitId, type: 'blue' });
+      addLog(`活動「${card.title}」→ ${target.name} 獲得藍特：${TRAIT_DATA[card.traitId].name}`, 'soul');
+    } else if (card.kind === 'marketBuff') {
+      game.nextMarketBuff = true;
+      addLog(`活動「${card.title}」→ 下個千年黑市馬匹 +15 三圍`, 'soul');
+    } else if (card.kind === 'gold') {
+      game.money += card.amount;
+      addLog(`活動「${card.title}」→ 獲得 ${card.amount}G`, 'soul');
+    }
+  }
+
+  function makeMarkChoice(winnerHorse) {
+    // 從 MARK_IDS 排除馬已持有的，最多 3 張（目前池子只有 2 張，所以是 0/1/2）
+    const owned = new Set((winnerHorse.marks || []).map(m => m.id));
+    const available = MARK_IDS.filter(id => !owned.has(id));
+    if (!available.length) return null;
+    const cards = available.map(id => ({
+      id: 'MARK_' + id,
+      kind: 'mark',
+      markId: id,
+      horseId: winnerHorse.id,
+      title: MARK_DATA[id].name,
+      desc: MARK_DATA[id].desc,
+    }));
+    return { kind: 'mark', cards, context: { horseId: winnerHorse.id } };
+  }
+
+  function awardMark(horse, markId) {
+    if (!horse.marks) horse.marks = [];
+    if (!horse.marksRecessive) horse.marksRecessive = [];
+    if (horse.marks.length >= 1) return; // 每馬最多 1 印記
+    horse.marks.push({ id: markId });
+    // 即時效果
+    if (markId === 'M01') {
+      // 無瑕之眼：speed +15，cap 提升至 115
+      horse.speed = Math.min(115, horse.speed + 15);
+    }
+    addLog(`✨ ${horse.name} 獲得印記：${MARK_DATA[markId].name}`, 'soul');
+  }
+
+  function speedCapOf(horse) {
+    return horse.marks && horse.marks.some(m => m.id === 'M01') ? 115 : 100;
+  }
 
   const RACE_TYPES = [
     { name:'冥原衝刺', attr:'Normal', terrain:'長平原'  },
@@ -1561,6 +1691,32 @@
     return { displayed, recessiveFlags, goldTriggered };
   }
 
+  function breedMarks(father, mother) {
+    // A 型隱性：雙親同印記 70% 顯現；單親持有 50% 隱性傳遞。每馬 max 1 顯性。
+    const displayed = [];
+    const recessive = [];
+    const fMarks = new Set([
+      ...((father.marks || []).map(m => m.id)),
+      ...((father.marksRecessive || [])),
+    ]);
+    const mMarks = new Set([
+      ...((mother.marks || []).map(m => m.id)),
+      ...((mother.marksRecessive || [])),
+    ]);
+    for (const id of new Set([...fMarks, ...mMarks])) {
+      if (fMarks.has(id) && mMarks.has(id)) {
+        if (Math.random() < 0.70 && displayed.length < 1) {
+          displayed.push({ id });
+        } else {
+          recessive.push(id);
+        }
+      } else if (Math.random() < 0.50) {
+        recessive.push(id);
+      }
+    }
+    return { displayed, recessive };
+  }
+
   function applyTraitMultiplier(horse, attr, terrain) {
     const d = horse.traits ? horse.traits.displayed : [];
     if (d.some(t => t.id === 'R04')) return 1.0;
@@ -1591,7 +1747,7 @@
     yearsElapsed: 0,
     maxYears: 30000,
     yearPerTurn: 1000,
-    money: 1000,
+    money: 10,
     horses: [],
     souls: [],
     market: [],
@@ -1600,10 +1756,24 @@
     stableExpanded: false,
     infoDrawerOpen: false,
     currentTurnMajor: false,
+    currentTurnPhase: 'race', // 'event' | 'race' | 'major'
     ragnarok: null,
     breedFatherId: null,
     breedMotherId: null,
+    stableSize: 6,
+    nextMarketBuff: false,
+    pendingChoice: null, // { kind: 'event'|'mark', cards: [...], context: {...} }
+    pendingChoiceQueue: [],
   };
+
+  function pushPending(choice) {
+    if (!choice) return;
+    if (!game.pendingChoice) game.pendingChoice = choice;
+    else game.pendingChoiceQueue.push(choice);
+  }
+  function resolvePending() {
+    game.pendingChoice = game.pendingChoiceQueue.shift() || null;
+  }
 
   function init() {
     game.horses = [
@@ -1622,7 +1792,21 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const currentTurn = game.yearsElapsed / game.yearPerTurn;
-    game.currentTurnMajor = currentTurn % 5 === 0;
+    const phaseInCycle = ((currentTurn - 1) % 6) + 1; // 1..6
+    if (phaseInCycle === 6) {
+      game.currentTurnPhase = 'major';
+      game.currentTurnMajor = true;
+    } else if (phaseInCycle === 3) {
+      game.currentTurnPhase = 'race';
+      game.currentTurnMajor = false;
+    } else {
+      game.currentTurnPhase = 'event';
+      game.currentTurnMajor = false;
+    }
+    if (currentTurn % 6 === 0) {
+      game.stableSize += 1;
+      addLog(`🏛 馬廄擴建 → ${game.stableSize} 格`, 'soul');
+    }
 
     for (const h of game.horses) {
       h.age += 1;
@@ -1634,7 +1818,7 @@
     const foodEaters = [];
     for (const h of game.horses) {
       if (h.traits && h.traits.displayed.some(t => t.id === 'R06')) {
-        foodCost += 80;
+        foodCost += 1;
         foodEaters.push(h.name);
       }
     }
@@ -1669,10 +1853,29 @@
       addLog(`升入靈魂區：${ascending.map(h => h.name).join('、')}`, 'soul');
     }
 
+    const buffApplied = game.nextMarketBuff;
     game.market = Array.from({ length: 4 }, makeMarketHorse);
+    if (buffApplied) {
+      game.market.forEach(m => {
+        m.speed = clamp(m.speed + 15, 1, 100);
+        m.power = clamp(m.power + 15, 1, 100);
+        m.stamina = clamp(m.stamina + 15, 1, 100);
+        const total = m.speed + m.power + m.stamina;
+        m.price = Math.max(1, Math.round(total / 25) + randInt(0, 2));
+        m._rare = true;
+      });
+      addLog(`✨ 稀有馬場開張 · 黑市馬匹三圍 +15`, 'soul');
+      game.nextMarketBuff = false;
+    }
 
-    const majorTag = game.currentTurnMajor ? '〔千年大典〕 ' : '';
-    addLog(`${majorTag}紀年 ${game.yearsElapsed.toLocaleString()} · 千年流逝。`);
+    const phaseTag = game.currentTurnPhase === 'major' ? '〔千年大典〕 '
+                   : game.currentTurnPhase === 'race'  ? '〔小賽事〕 '
+                   : '〔活動〕 ';
+    addLog(`${phaseTag}紀年 ${game.yearsElapsed.toLocaleString()} · 千年流逝。`);
+
+    if (game.currentTurnPhase === 'event') {
+      pushPending(makeEventChoice());
+    }
 
     if (game.yearsElapsed >= game.maxYears) {
       addLog(`時辰已盡 · 30 個千年皆已過去。`);
@@ -1681,6 +1884,7 @@
   }
 
   function getRaceBatch() {
+    if (game.currentTurnPhase === 'event') return [];
     const eligible = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn);
     if (!game.currentTurnMajor) return eligible;
     const racedCount = game.horses.filter(h => h.racedThisTurn).length;
@@ -1705,10 +1909,16 @@
   }
 
   function buyMarketHorse(marketId) {
+    if (game.currentTurnPhase === 'event') return;
     const idx = game.market.findIndex(m => m.id === marketId);
     if (idx < 0) return;
     const horse = game.market[idx];
     if (game.money < horse.price) return;
+    if (game.horses.length >= game.stableSize) {
+      addLog(`馬廄已滿（${game.stableSize}/${game.stableSize}），無法買入 ${horse.name}。`, 'death');
+      render();
+      return;
+    }
     const price = horse.price;
     delete horse.price;
     game.money -= price;
@@ -1720,12 +1930,17 @@
 
   let __cardSilent = false;
   function breed(fatherId, motherId) {
+    if (game.currentTurnPhase === 'event') return null;
     const father = game.horses.find(h => h.id === fatherId);
     const mother = game.horses.find(h => h.id === motherId);
     if (!father || !mother) return null;
-    if (father.age < 3 || mother.age < 3) return null;
+    if (father.age < 1 || father.age > 4 || mother.age < 1 || mother.age > 4) return null;
     if (father.gender !== 'male' || mother.gender !== 'female') return null;
     if (mother.bredThisTurn) return null;
+    if (game.horses.length >= game.stableSize) {
+      if (!__cardSilent) addLog(`馬廄已滿（${game.stableSize}/${game.stableSize}），${mother.name} 暫緩交配。`, 'death');
+      return null;
+    }
 
     const events = [];
     const mutated = { speed: false, power: false, stamina: false };
@@ -1747,6 +1962,7 @@
     };
 
     const childTraits = breedTraits(father, mother);
+    const childMarks = breedMarks(father, mother);
     const cOrigin = childOrigin(father, mother, ovrOf);
     const { surname: cSurname, givenName: cGiven, name: cName } = generateChildName(father, mother, cOrigin, ovrOf);
     const child = {
@@ -1763,6 +1979,8 @@
       mutated,
       skill: null,
       traits: { displayed: childTraits.displayed, recessiveFlags: childTraits.recessiveFlags },
+      marks: childMarks.displayed,
+      marksRecessive: childMarks.recessive,
       parents: {
         father: { id: father.id, name: father.name, ovr: ovrOf(father), origin: father.origin },
         mother: { id: mother.id, name: mother.name, ovr: ovrOf(mother), origin: mother.origin },
@@ -1773,6 +1991,11 @@
       child.skill = pick(parentSkills);
     }
 
+    // 印記顯性遺傳的即時效果（M01 立即 +15 速度）
+    if (child.marks.some(m => m.id === 'M01')) {
+      child.speed = Math.min(115, child.speed + 15);
+    }
+
     game.horses.push(child);
     mother.bredThisTurn = true;
 
@@ -1781,7 +2004,9 @@
     const goldTag = childTraits.goldTriggered ? ' ✨【地獄之王】降臨！' : '';
     const traitNames = childTraits.displayed.filter(t => t.type !== 'gold').map(t => TRAIT_DATA[t.id]?.name).filter(Boolean);
     const traitTag = traitNames.length ? ` 特性：${traitNames.join('、')}` : '';
-    addLog(`交配：${father.name} × ${mother.name} → ${child.name}（${child.gender === 'male' ? '公' : '母'}） ${eventStr}${skillInherit}${traitTag}${goldTag}`, goldTag ? 'soul' : '');
+    const markNames = child.marks.map(m => MARK_DATA[m.id]?.name).filter(Boolean);
+    const markTag = markNames.length ? ` ✨印記：${markNames.join('、')}` : '';
+    addLog(`交配：${father.name} × ${mother.name} → ${child.name}（${child.gender === 'male' ? '公' : '母'}） ${eventStr}${skillInherit}${traitTag}${goldTag}${markTag}`, (goldTag || markTag) ? 'soul' : '');
     render();
     if (!__cardSilent && typeof window.openHorseCard === 'function') {
       const lucky = typeof window.isLuckyBirth === 'function' && window.isLuckyBirth(child);
@@ -1791,6 +2016,7 @@
   }
 
   function runRace(horseId) {
+    if (game.currentTurnPhase === 'event') return;
     const h = game.horses.find(x => x.id === horseId);
     if (!h || h.status !== STATE_PEAK || h.racedThisTurn) return;
 
@@ -1803,13 +2029,14 @@
     const enemy = makeEnemy();
     const variance = () => 0.8 + Math.random() * 0.4;
     const traitMult = applyTraitMultiplier(h, raceType.attr, raceType.terrain);
-    const playerScore = totalStats(h) * traitMult * variance();
+    const m02Bonus = (isMajor && h.marks && h.marks.some(m => m.id === 'M02')) ? 30 : 0;
+    const playerScore = (totalStats(h) + m02Bonus) * traitMult * variance();
     const enemyScore = totalStats(enemy) * variance();
 
     const hasR03 = h.traits && h.traits.displayed.some(t => t.id === 'R03');
     const r03Forced = isMajor && hasR03;
     const won = r03Forced ? false : (playerScore >= enemyScore);
-    const reward = won ? (isMajor ? 1000 : 300) : (isMajor ? 150 : 60);
+    const reward = won ? (isMajor ? 10 : 3) : (isMajor ? 2 : 1);
     game.money += reward;
     h.racedThisTurn = true;
 
@@ -1823,6 +2050,10 @@
       const bestStat = ['speed', 'power', 'stamina'].reduce((a, b) => h[a] > h[b] ? a : b);
       newSkill = SKILL_LIST.find(s => s.stat === bestStat) || SKILL_LIST[0];
       h.skill = newSkill;
+    }
+    if (won && isMajor) {
+      const markChoice = makeMarkChoice(h);
+      if (markChoice) pushPending(markChoice);
     }
 
     game.races.unshift({
@@ -1895,9 +2126,10 @@
   }
 
   function getSmartBreedPairs() {
-    const eligibleMales = game.horses.filter(h => h.age >= 3 && h.gender === 'male');
+    const breedAge = h => h.age >= 1 && h.age <= 4;
+    const eligibleMales = game.horses.filter(h => breedAge(h) && h.gender === 'male');
     const eligibleFemales = game.horses
-      .filter(h => h.age >= 3 && h.gender === 'female' && !h.bredThisTurn)
+      .filter(h => breedAge(h) && h.gender === 'female' && !h.bredThisTurn)
       .sort((a, b) => ovrOf(b) - ovrOf(a));
     if (!eligibleMales.length || !eligibleFemales.length) return [];
     return eligibleFemales.map(mother => {
@@ -1946,7 +2178,7 @@
     }
 
     // Greedy：優先母馬，但確保至少有一對公母可交配
-    const hasMale = game.horses.some(h => h.status === STATE_RETIRED && h.gender === 'male');
+    const hasMale = game.horses.some(h => h.gender === 'male' && h.age >= 1 && h.age <= 4);
     if (hasMale) {
       mktF.forEach(f => { if (game.money >= f.price) buyMarketHorse(f.id); });
     } else {
@@ -2063,11 +2295,16 @@
     document.getElementById('money').textContent = `${game.money.toLocaleString()} G`;
 
     const btn = document.getElementById('next-turn');
-    btn.disabled = game.yearsElapsed >= game.maxYears;
-    btn.textContent = btn.disabled ? '時辰已盡' : '下一個千年';
+    const blockedByChoice = !!game.pendingChoice;
+    btn.disabled = game.yearsElapsed >= game.maxYears || blockedByChoice;
+    btn.textContent = game.yearsElapsed >= game.maxYears ? '時辰已盡'
+                    : blockedByChoice ? '請先做出選擇'
+                    : '下一個千年';
     const fabBtn = document.getElementById('fab-next');
     fabBtn.disabled = btn.disabled;
-    fabBtn.textContent = btn.disabled ? '終局' : '下一年';
+    fabBtn.textContent = game.yearsElapsed >= game.maxYears ? '終局'
+                       : blockedByChoice ? '選擇'
+                       : '下一年';
 
     const omniAction = getOmniAction();
     const omniBtn = document.getElementById('fab-omni');
@@ -2085,8 +2322,21 @@
       ? (majorSlots > 0 ? `大典出戰 (${effectiveEligible})` : '名額已滿')
       : (eligibleCount > 0 ? `全員出戰 (${eligibleCount})` : '全員出戰');
 
-    document.getElementById('major-event-banner').style.display =
-      game.currentTurnMajor ? 'block' : 'none';
+    const phaseBanner = document.getElementById('major-event-banner');
+    if (game.yearsElapsed > 0 && game.yearsElapsed < game.maxYears + 1) {
+      if (game.currentTurnPhase === 'major') {
+        phaseBanner.style.display = 'block';
+        phaseBanner.textContent = '⚡ 千年大典 · 賽事獎金加倍、勝者獲賜技能與印記';
+      } else if (game.currentTurnPhase === 'race') {
+        phaseBanner.style.display = 'block';
+        phaseBanner.textContent = '🏇 小賽事千年 · 全員出戰賺取黃金';
+      } else {
+        phaseBanner.style.display = 'block';
+        phaseBanner.textContent = '✨ 活動千年 · 三選一獎勵';
+      }
+    } else {
+      phaseBanner.style.display = 'none';
+    }
 
     const smartPairs = getSmartBreedPairs();
     const infoToggle = document.getElementById('info-toggle');
@@ -2116,8 +2366,9 @@
       `).join('');
     }
 
-    const males   = game.horses.filter(h => h.age >= 3 && h.gender === 'male');
-    const females = game.horses.filter(h => h.age >= 3 && h.gender === 'female');
+    const breedAge = h => h.age >= 1 && h.age <= 4;
+    const males   = game.horses.filter(h => breedAge(h) && h.gender === 'male');
+    const females = game.horses.filter(h => breedAge(h) && h.gender === 'female');
     if (!males.find(h => h.id === game.breedFatherId)) game.breedFatherId = null;
     const selF = females.find(h => h.id === game.breedMotherId);
     if (!selF || selF.bredThisTurn) game.breedMotherId = null;
@@ -2141,8 +2392,8 @@
     };
     const maleListEl   = document.getElementById('breed-male-list');
     const femaleListEl = document.getElementById('breed-female-list');
-    maleListEl.innerHTML   = males.length   ? males.map(h => cardHtml(h, 'male')).join('')     : `<div class="breed-empty">無 3 歲以上公馬</div>`;
-    femaleListEl.innerHTML = females.length ? females.map(h => cardHtml(h, 'female')).join('') : `<div class="breed-empty">無 3 歲以上母馬</div>`;
+    maleListEl.innerHTML   = males.length   ? males.map(h => cardHtml(h, 'male')).join('')     : `<div class="breed-empty">無 1–4 歲公馬</div>`;
+    femaleListEl.innerHTML = females.length ? females.map(h => cardHtml(h, 'female')).join('') : `<div class="breed-empty">無 1–4 歲母馬</div>`;
 
     const breedBtnEl = document.getElementById('breed-btn');
     const father = males.find(h => h.id === game.breedFatherId);
@@ -2191,7 +2442,7 @@
           <div class="market-meta">
             <span class="ovr">OVR ${ovrOf(m)}</span>
             <span class="price">${m.price.toLocaleString()} G</span>
-            <span class="status retired">退役</span>
+            <span class="status ${m.status}">${STATE_LABEL[m.status] || ''} ${m.age}歲</span>
           </div>
           <button class="buy-btn" data-mid="${m.id}" ${game.money < m.price ? 'disabled' : ''}>${game.money < m.price ? '黃金不足' : '購入'}</button>
         </div>
@@ -2218,8 +2469,14 @@
           const td = TRAIT_DATA[t.id];
           return td ? `<span class="trait-badge ${t.type}" data-tooltip="${td.desc}">${td.name}</span>` : '';
         }).join('') : '';
+        const markBadges = (h.marks || []).map(m => {
+          const md = MARK_DATA[m.id];
+          return md ? `<span class="mark-badge" data-tooltip="${md.desc}">★ ${md.name}</span>` : '';
+        }).join('');
         const recessiveWarn = h.traits && h.traits.recessiveFlags.length
           ? `<span class="trait-warning">⚠ 不詳因子</span>` : '';
+        const recessiveMarkWarn = (h.marksRecessive && h.marksRecessive.length)
+          ? `<span class="trait-warning">★ 印記血脈</span>` : '';
         const rarityId = (typeof window.rarityOf === 'function') ? window.rarityOf(h).id : '';
         const ageDim = h.status !== STATE_PEAK ? 'dim' : '';
         return `
@@ -2234,7 +2491,7 @@
                 <span class="stat-pill ${mut.power ? 'mut' : ePow > h.power ? 'boosted' : ''}">力量 <strong>${ePow}</strong></span>
                 <span class="stat-pill ${mut.stamina ? 'mut' : eSta > h.stamina ? 'boosted' : ''}">體力 <strong>${eSta}</strong></span>
               </div>
-              ${(traitBadges || recessiveWarn) ? `<div class="trait-row">${traitBadges}${recessiveWarn}</div>` : ''}
+              ${(traitBadges || markBadges || recessiveWarn || recessiveMarkWarn) ? `<div class="trait-row">${markBadges}${traitBadges}${recessiveWarn}${recessiveMarkWarn}</div>` : ''}
             </div>
             <div class="horse-meta">
               <span class="ovr">OVR ${ovrOf(h)}</span>
@@ -2316,6 +2573,71 @@
     } else {
       ragBanner.style.display = 'none';
     }
+
+    const capEl = document.getElementById('stable-cap');
+    if (capEl) {
+      const full = game.horses.length >= game.stableSize;
+      capEl.textContent = `${game.horses.length} / ${game.stableSize}`;
+      capEl.classList.toggle('full', full);
+    }
+
+    renderChoiceModal();
+  }
+
+  function renderChoiceModal() {
+    const overlay = document.getElementById('choice-modal');
+    const titleEl = document.getElementById('choice-modal-title');
+    const cardsEl = document.getElementById('choice-cards');
+    if (!game.pendingChoice) {
+      overlay.classList.remove('open');
+      return;
+    }
+    const { kind, cards, context } = game.pendingChoice;
+    if (kind === 'event') {
+      titleEl.textContent = '活 動 · 三 選 一';
+    } else if (kind === 'mark') {
+      const horse = game.horses.find(h => h.id === context.horseId);
+      titleEl.textContent = horse ? `印 記 賜 予 · ${horse.name}` : '印 記 賜 予';
+    }
+    cardsEl.innerHTML = cards.map((c, i) => {
+      let target = '';
+      if (c.kind === 'trait') {
+        const candidate = game.horses
+          .filter(h => h.traits && !h.traits.displayed.some(t => t.id === c.traitId))
+          .sort((a, b) => ovrOf(b) - ovrOf(a))[0];
+        target = candidate ? `→ 將施加於 ${candidate.name}` : '→ 無對象（將浪費）';
+      } else if (c.kind === 'marketBuff') {
+        target = '→ 影響下個千年的黑市';
+      } else if (c.kind === 'gold') {
+        target = `→ +${c.amount}G`;
+      } else if (c.kind === 'mark') {
+        target = '→ 永久印記，A 型隱性遺傳';
+      }
+      const kindLabel = c.kind === 'mark' ? '印記' : c.kind === 'trait' ? '藍特' : c.kind === 'marketBuff' ? '黑市' : '即時';
+      return `
+        <div class="choice-card" data-idx="${i}">
+          <div class="choice-card-kind">${kindLabel}</div>
+          <div class="choice-card-title">${c.title}</div>
+          <div class="choice-card-desc">${c.desc}</div>
+          <div class="choice-card-target">${target}</div>
+        </div>
+      `;
+    }).join('');
+    overlay.classList.add('open');
+  }
+
+  function pickChoiceCard(idx) {
+    if (!game.pendingChoice) return;
+    const card = game.pendingChoice.cards[idx];
+    if (!card) return;
+    if (game.pendingChoice.kind === 'event') {
+      applyChoiceCard(card);
+    } else if (game.pendingChoice.kind === 'mark') {
+      const horse = game.horses.find(h => h.id === game.pendingChoice.context.horseId);
+      if (horse) awardMark(horse, card.markId);
+    }
+    resolvePending();
+    render();
   }
 
   document.getElementById('fab-next').addEventListener('click', nextTurn);
@@ -2377,6 +2699,12 @@
 
   document.getElementById('ragnarok-banner').addEventListener('click', (e) => {
     if (e.target.id === 'enter-ragnarok-btn') triggerRagnarok();
+  });
+
+  document.getElementById('choice-modal').addEventListener('click', (e) => {
+    const card = e.target.closest('.choice-card');
+    if (!card) return;
+    pickChoiceCard(parseInt(card.dataset.idx, 10));
   });
 
   // 馬匹清單 modal
