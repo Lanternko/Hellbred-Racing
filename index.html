@@ -1004,7 +1004,10 @@
 
   /* 行動版 (≤600px)：放大字級避免手機讀不到 */
   @media (max-width: 600px) {
-    body { padding: 18px 14px; font-size: 16px; }
+    body {
+      padding: 18px 14px calc(112px + env(safe-area-inset-bottom, 0px));
+      font-size: 16px;
+    }
     h1 { font-size: 22px; letter-spacing: 0.12em; }
     .subtitle { font-size: 11px; }
 
@@ -1058,6 +1061,34 @@
     .soul-panel.open { transform: translateX(0); }
     .soul-panel-tab { display: none; }
     .soul-fab { display: flex; }
+
+    .fab-actions {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 150;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: rgba(46,34,47,.94);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -6px 20px rgba(0,0,0,.28);
+      backdrop-filter: blur(10px);
+    }
+    .fab-next,
+    .fab-sweep {
+      position: static;
+      min-width: 0;
+      width: 100%;
+      padding: 13px 14px 15px;
+      box-shadow: var(--raise), var(--drop-lg);
+    }
+    .fab-next.hidden {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
     /* Compact horse card stats on narrow screens */
     .horse-actions { flex-wrap: wrap; gap: 6px; }
@@ -1135,8 +1166,10 @@
   <div id="ragnarok-banner" class="ragnarok-banner" style="display:none"></div>
 </div>
 
-<button class="fab-sweep" id="fab-sweep">一鍵掃蕩</button>
-<button class="fab-next" id="fab-next">下一年</button>
+<div class="fab-actions">
+  <button class="fab-sweep" id="fab-sweep">一鍵掃蕩</button>
+  <button class="fab-next" id="fab-next">下一年</button>
+</div>
 
 <div id="horse-modal" class="modal-overlay">
   <div class="modal-box">
