@@ -1,0 +1,372 @@
+/* === 馬匹詳細卡片 === */
+/* 稀有度依 OVR 分級；卡片色彩 / glow / shine 視 rarity 切換 */
+
+.card-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .75);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+}
+.card-overlay.open { display: flex; }
+.card-overlay .card-stage {
+  perspective: 1400px;
+  width: 100%;
+  max-width: 380px;
+  margin: auto;
+}
+.card-overlay .card-flip {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.7s var(--ease-snap);
+}
+.card-overlay .card-flip.flipped { transform: rotateY(180deg); }
+.card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.card-face.card-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+.horse-card-detail {
+  --r1: #64748b;
+  --r2: #475569;
+  --r-glow: rgba(100, 116, 139, .35);
+  --r-edge: #94a3b8;
+
+  position: relative;
+  border-radius: 14px;
+  padding: 18px 20px 20px;
+  background:
+    linear-gradient(160deg, var(--r1) 0%, var(--r2) 100%),
+    var(--bg-card);
+  border: 2px solid var(--r-edge);
+  box-shadow:
+    0 0 28px var(--r-glow),
+    0 12px 48px rgba(0, 0, 0, .7),
+    inset 0 1px 0 rgba(255, 255, 255, .15);
+  color: #fff;
+  overflow: hidden;
+  isolation: isolate;
+}
+.horse-card-detail.rarity-rare {
+  --r1: #4f8ed8; --r2: #2a5fb0; --r-glow: rgba(79,142,216,.45); --r-edge: #7eb6f5;
+}
+.horse-card-detail.rarity-epic {
+  --r1: #1eb88a; --r2: #0c8f6a; --r-glow: rgba(30,184,138,.45); --r-edge: #5fe0b3;
+}
+.horse-card-detail.rarity-legendary {
+  --r1: #f5b13e; --r2: #d97706; --r-glow: rgba(245,177,62,.55); --r-edge: #ffd576;
+}
+.horse-card-detail.rarity-mythic {
+  --r1: #ef4444; --r2: #a61c1c; --r-glow: rgba(239,68,68,.6); --r-edge: #ff7b6b;
+}
+.horse-card-detail.rarity-godlike {
+  --r1: #a368f0; --r2: #6d28d9; --r-glow: rgba(163,104,240,.65); --r-edge: #d6b4ff;
+}
+
+/* shine 流光：legendary 以上才開 */
+.horse-card-detail.rarity-legendary::before,
+.horse-card-detail.rarity-mythic::before,
+.horse-card-detail.rarity-godlike::before {
+  content: '';
+  position: absolute;
+  top: -60%; bottom: -60%; left: -40%; right: -40%;
+  background: linear-gradient(115deg,
+    transparent 38%,
+    rgba(255, 255, 255, .18) 50%,
+    transparent 62%);
+  animation: card-shine 5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes card-shine {
+  0%   { transform: translateX(-30%) rotate(0deg); opacity: .55; }
+  50%  { transform: translateX(30%)  rotate(0deg); opacity: 1; }
+  100% { transform: translateX(-30%) rotate(0deg); opacity: .55; }
+}
+.horse-card-detail > * { position: relative; z-index: 1; }
+
+/* reveal 出生動畫 */
+.card-stage.revealing .card-flip { animation: card-reveal .65s var(--ease-snap); }
+@keyframes card-reveal {
+  0%   { transform: scale(.55) rotateY(90deg); opacity: 0; }
+  55%  { transform: scale(1.06) rotateY(-12deg); opacity: 1; }
+  100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+}
+
+/* 內部排版 */
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-right: 38px; /* 留出 close 按鈕空間 */
+}
+.card-rarity-tag {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.32em;
+  padding: 3px 10px;
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+}
+.card-origin-tag {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  padding: 3px 8px;
+  background: rgba(0, 0, 0, .3);
+  border-radius: 3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+}
+.card-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .7);
+}
+.card-name {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.card-gender {
+  font-size: 12px;
+  padding: 2px 7px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, .35);
+  letter-spacing: 0.1em;
+}
+.card-gender.male { color: #cdd9ff; }
+.card-gender.female { color: #ffd6cf; }
+
+.card-ovr-block {
+  text-align: center;
+  margin: 6px 0 14px;
+  text-shadow: 0 3px 6px rgba(0, 0, 0, .7);
+}
+.card-ovr-num {
+  font-family: var(--font-mono);
+  font-size: 78px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.card-ovr-label {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.45em;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.card-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.card-stat {
+  text-align: center;
+  padding: 8px 4px 9px;
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 5px;
+}
+.card-stat-label {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  opacity: 0.75;
+}
+.card-stat-num {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.card-stat.mut .card-stat-num { color: #ffe066; text-shadow: 0 0 6px rgba(255, 224, 102, .8); }
+.card-stat.boost .card-stat-num { color: #c8ffd3; }
+
+.card-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.card-meta-pill {
+  padding: 3px 9px;
+  background: rgba(0, 0, 0, .35);
+  border-radius: 3px;
+  letter-spacing: 0.08em;
+}
+.card-meta-pill.skill { background: rgba(249, 194, 43, .25); border: 1px solid rgba(249, 194, 43, .55); color: #ffeaa1; }
+
+.card-section {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, .3);
+  border-radius: 5px;
+}
+.card-section-title {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+.card-trait {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 5px 0;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+}
+.card-trait:first-child { border-top: none; }
+.card-trait-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+.card-trait-tag.blue { background: rgba(79, 142, 216, .9); color: #fff; }
+.card-trait-tag.red { background: rgba(239, 68, 68, .9); color: #fff; }
+.card-trait-tag.gold { background: linear-gradient(120deg, #f9c22b, #ea4f36); color: #1a1010; }
+.card-trait-desc {
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+.card-recessive {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.card-parents {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.card-parent {
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.card-parent-role {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  opacity: 0.6;
+  margin-bottom: 2px;
+}
+.card-parent-name { font-weight: 700; }
+.card-parent-ovr {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 1px;
+}
+.card-parent-x {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  opacity: 0.5;
+}
+.card-parents-empty {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.65;
+  font-style: italic;
+}
+
+.card-close-btn {
+  position: absolute;
+  top: 10px; right: 12px;
+  width: 30px; height: 30px;
+  background: rgba(0, 0, 0, .45);
+  border: 1px solid rgba(255, 255, 255, .25);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+}
+.card-close-btn:hover { background: rgba(0, 0, 0, .65); }
+
+/* 暴擊背面（待翻牌） */
+.card-back-mystery {
+  position: relative;
+  border-radius: 14px;
+  padding: 36px 24px;
+  min-height: 420px;
+  background:
+    radial-gradient(ellipse at center, rgba(249, 194, 43, .15), transparent 70%),
+    linear-gradient(160deg, var(--c-1), var(--c-0));
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 36px rgba(249, 194, 43, .55), 0 12px 48px rgba(0, 0, 0, .8);
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.card-back-mystery::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg, transparent, rgba(249, 194, 43, .2), transparent 50%);
+  animation: card-back-spin 6s linear infinite;
+  pointer-events: none;
+}
+@keyframes card-back-spin {
+  to { transform: rotate(360deg); }
+}
+.card-back-mystery > * { position: relative; z-index: 1; }
+.card-back-glyph {
+  font-size: 64px;
+  filter: drop-shadow(0 0 12px rgba(249, 194, 43, .8));
+}
+.card-back-title {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  letter-spacing: 0.4em;
+  color: var(--gold);
+  text-shadow: 0 0 10px rgba(249, 194, 43, .8);
+}
+.card-back-hint {
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+  animation: card-back-pulse 1.4s ease-in-out infinite;
+}
+@keyframes card-back-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 460px) {
+  .card-overlay .card-stage { max-width: 100%; }
+  .card-ovr-num { font-size: 64px; }
+  .card-name { font-size: 19px; }
+}

@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="card.css">
 <style>
   :root {
     /* Lospec Resurrect-64（精選 13 色） — 後續 Step 2/3 禁止再寫裸 hex，只用語意別名或 --c-N */
@@ -1321,14 +1322,9 @@
   </div>
 </div>
 
+<script src="names.js"></script>
+<script src="card.js"></script>
 <script>
-  const NAMES = [
-    '焰蹄', '黑曜', '冥淵', '血鬃', '灰燼',
-    '死霧', '紅蓮', '夜煞', '骸骨', '硫磺',
-    '深淵', '魔影', '焦土', '炙風', '鏽刃',
-    '玄鐵', '殞星', '霜火', '罪業', '鴉啼',
-    '焚天', '裂魂', '蝕骨', '燼火', '冥途'
-  ];
 
   const ENEMY_NAMES = [
     '鬼面', '渡鴉', '夜叉', '魔僕', '無常',
@@ -1351,16 +1347,9 @@
     return STATE_RETIRED;
   }
 
-  const usedNames = new Set();
-  function uniqueName() {
-    const pool = NAMES.filter(n => !usedNames.has(n));
-    if (!pool.length) {
-      usedNames.clear();
-      return uniqueName();
-    }
-    const name = pick(pool);
-    usedNames.add(name);
-    return name;
+  function newHorseName(origin) {
+    const o = origin || randomOrigin();
+    return { ...generateHorseName(o), origin: o };
   }
 
   const BLUE_IDS = ['B01','B02','B03','B04','B05','B06'];
@@ -1368,9 +1357,11 @@
   function makeHorse({ age = 0 } = {}) {
     const a = Math.max(0, Math.floor(age));
     const recessiveFlags = Math.random() < 0.6 ? [pick(BLUE_IDS)] : [];
+    const origin = randomOrigin();
+    const { surname, givenName, name } = generateHorseName(origin);
     return {
       id: (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()),
-      name: uniqueName(),
+      origin, surname, givenName, name,
       gender: Math.random() < 0.5 ? 'male' : 'female',
       age: a,
       speed: clamp(randInt(30, 70), 1, 100),
@@ -1381,6 +1372,7 @@
       bredThisTurn: false,
       skill: null,
       traits: { displayed: [], recessiveFlags },
+      parents: null,
     };
   }
 
@@ -1410,9 +1402,11 @@
     const stat = () => clamp(randInt(lo, hi), 1, 100);
     const speed = stat(), power = stat(), stamina = stat();
     const total = speed + power + stamina;
+    const mOrigin = randomOrigin();
+    const { surname: mSurname, givenName: mGiven, name: mName } = generateHorseName(mOrigin);
     return {
       id: (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()),
-      name: uniqueName(),
+      origin: mOrigin, surname: mSurname, givenName: mGiven, name: mName,
       gender: Math.random() < 0.5 ? 'male' : 'female',
       age: 4,
       speed, power, stamina,
@@ -1668,13 +1662,14 @@
     render();
   }
 
+  let __cardSilent = false;
   function breed(fatherId, motherId) {
     const father = game.horses.find(h => h.id === fatherId);
     const mother = game.horses.find(h => h.id === motherId);
-    if (!father || !mother) return;
-    if (father.age < 3 || mother.age < 3) return;
-    if (father.gender !== 'male' || mother.gender !== 'female') return;
-    if (mother.bredThisTurn) return;
+    if (!father || !mother) return null;
+    if (father.age < 3 || mother.age < 3) return null;
+    if (father.gender !== 'male' || mother.gender !== 'female') return null;
+    if (mother.bredThisTurn) return null;
 
     const events = [];
     const mutated = { speed: false, power: false, stamina: false };
@@ -1696,9 +1691,11 @@
     };
 
     const childTraits = breedTraits(father, mother);
+    const cOrigin = childOrigin(father, mother, ovrOf);
+    const { surname: cSurname, givenName: cGiven, name: cName } = generateChildName(father, mother, cOrigin, ovrOf);
     const child = {
       id: (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()),
-      name: uniqueName(),
+      origin: cOrigin, surname: cSurname, givenName: cGiven, name: cName,
       gender: Math.random() < 0.5 ? 'male' : 'female',
       age: 0,
       speed: breedStat('speed'),
@@ -1710,6 +1707,10 @@
       mutated,
       skill: null,
       traits: { displayed: childTraits.displayed, recessiveFlags: childTraits.recessiveFlags },
+      parents: {
+        father: { id: father.id, name: father.name, ovr: ovrOf(father), origin: father.origin },
+        mother: { id: mother.id, name: mother.name, ovr: ovrOf(mother), origin: mother.origin },
+      },
     };
     const parentSkills = [father.skill, mother.skill].filter(Boolean);
     if (parentSkills.length && Math.random() < 0.5) {
@@ -1726,6 +1727,11 @@
     const traitTag = traitNames.length ? ` 特性：${traitNames.join('、')}` : '';
     addLog(`交配：${father.name} × ${mother.name} → ${child.name}（${child.gender === 'male' ? '公' : '母'}） ${eventStr}${skillInherit}${traitTag}${goldTag}`, goldTag ? 'soul' : '');
     render();
+    if (!__cardSilent && typeof window.openHorseCard === 'function') {
+      const lucky = typeof window.isLuckyBirth === 'function' && window.isLuckyBirth(child);
+      window.openHorseCard(child, { reveal: true, lucky });
+    }
+    return child;
   }
 
   function runRace(horseId) {
@@ -1853,7 +1859,18 @@
   }
 
   function breedAll() {
-    getSmartBreedPairs().forEach(({ father, mother }) => breed(father.id, mother.id));
+    __cardSilent = true;
+    const luckyChildren = [];
+    getSmartBreedPairs().forEach(({ father, mother }) => {
+      const child = breed(father.id, mother.id);
+      if (child && window.isLuckyBirth && window.isLuckyBirth(child)) luckyChildren.push(child);
+    });
+    __cardSilent = false;
+    if (luckyChildren.length && window.openHorseCard) {
+      // 一鍵交配只挑最高 OVR 的幸運兒呈現，避免卡片連發
+      luckyChildren.sort((a, b) => ovrOf(b) - ovrOf(a));
+      window.openHorseCard(luckyChildren[0], { reveal: true, lucky: true });
+    }
   }
 
   function smartBuy() {
@@ -2183,7 +2200,7 @@
       const champId = game.ragnarok && game.ragnarok.champion ? game.ragnarok.champion.id : null;
       const sortedSouls = [...game.souls].sort((a, b) => ovrOf(b) - ovrOf(a));
       soulListEl.innerHTML = sortedSouls.map(s => `
-        <div class="soul-card ${s.id === champId ? 'soul-champion' : ''}">
+        <div class="soul-card ${s.id === champId ? 'soul-champion' : ''}" data-id="${s.id}">
           <div class="horse-info">
             <div class="horse-name-row">
               <span class="soul-name">${s.name}</span>
@@ -2326,7 +2343,7 @@
       return;
     }
     body.innerHTML = `<div class="modal-horse-list">${list.map(h => `
-      <div class="modal-horse-row">
+      <div class="modal-horse-row" data-id="${h.id}">
         <div class="modal-horse-info">
           <div class="modal-horse-name">
             ${h.name}
