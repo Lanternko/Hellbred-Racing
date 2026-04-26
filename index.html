@@ -749,7 +749,8 @@
     transition: background 0.12s var(--ease-snap),
                 transform 0.08s var(--ease-snap);
   }
-  .fab-next { bottom: 24px; right: 24px; }
+  .fab-next { bottom: 24px; right: 24px; opacity: 1; pointer-events: auto; transition: background 0.12s var(--ease-snap), transform 0.08s var(--ease-snap), opacity 0.2s ease; }
+  .fab-next.hidden { opacity: 0; pointer-events: none; }
   .fab-sweep { bottom: 24px; left: 56px; background: var(--c-2); border-color: var(--c-2); }
   .fab-sweep.sweeping { background: var(--c-12); border-color: var(--c-12); }
   .fab-next:hover:not(:disabled),
@@ -1061,7 +1062,7 @@
     }
     render();
     if (game.sweeping && !game.currentTurnMajor && game.yearsElapsed < game.maxYears) {
-      sweepTimer = setTimeout(nextTurn, 700);
+      sweepTimer = setTimeout(doSmartSweep, 700);
     }
   }
 
@@ -1202,6 +1203,61 @@
     const eligibleFemales = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'female' && !h.bredThisTurn);
     if (!eligibleFemales.length) return;
     eligibleFemales.forEach(f => breed(bestMale.id, f.id));
+  }
+
+  function smartBuy() {
+    const mktF = [...game.market].filter(m => m.gender === 'female').sort((a, b) => ovrOf(b) - ovrOf(a));
+    const mktM = [...game.market].filter(m => m.gender === 'male').sort((a, b) => ovrOf(b) - ovrOf(a));
+    if (!mktF.length && !mktM.length) return;
+
+    // 足夠做完整一鍵買入？
+    const allFCost = mktF.reduce((s, m) => s + m.price, 0);
+    const topMale = mktM[0];
+    if (game.money >= allFCost + (topMale ? topMale.price : 0)) {
+      buyAllMarket();
+      return;
+    }
+
+    // Greedy：優先母馬，但確保至少有一對公母可交配
+    const hasMale = game.horses.some(h => h.status === STATE_RETIRED && h.gender === 'male');
+    if (hasMale) {
+      mktF.forEach(f => { if (game.money >= f.price) buyMarketHorse(f.id); });
+    } else {
+      // 需要留預算買一匹公馬
+      const affordable = mktM.filter(m => m.price <= game.money).sort((a, b) => a.price - b.price);
+      if (!affordable.length) {
+        mktF.forEach(f => { if (game.money >= f.price) buyMarketHorse(f.id); });
+        return;
+      }
+      const reserve = affordable[0].price;
+      // 買母馬，留 reserve
+      mktF.forEach(f => { if (game.money - f.price >= reserve) buyMarketHorse(f.id); });
+      // 買最強公馬
+      const bestM = mktM.find(m => game.money >= m.price);
+      if (bestM) buyMarketHorse(bestM.id);
+      // 剩餘金錢再掃母馬
+      mktF.forEach(f => {
+        if (game.market.some(m => m.id === f.id) && game.money >= f.price) buyMarketHorse(f.id);
+      });
+    }
+  }
+
+  function doSmartSweep() {
+    if (!game.sweeping || game.yearsElapsed >= game.maxYears) return;
+    // 1. 全員出戰
+    const eligible = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn);
+    if (game.currentTurnMajor) {
+      const slots = Math.max(0, 2 - game.horses.filter(h => h.racedThisTurn).length);
+      eligible.sort((a, b) => ovrOf(b) - ovrOf(a)).slice(0, slots).forEach(h => runRace(h.id));
+    } else {
+      eligible.forEach(h => runRace(h.id));
+    }
+    // 2. 智慧買入
+    smartBuy();
+    // 3. 一鍵交配
+    breedAll();
+    // 4. 下一年
+    nextTurn();
   }
 
   const RANK_LABELS = ['冠軍', '亞軍', '季軍'];
@@ -1491,11 +1547,18 @@
     btn.textContent = game.sweeping ? '停止掃蕩' : '一鍵掃蕩';
     btn.classList.toggle('sweeping', game.sweeping);
     if (game.sweeping && !game.currentTurnMajor && game.yearsElapsed < game.maxYears) {
-      sweepTimer = setTimeout(nextTurn, 700);
+      sweepTimer = setTimeout(doSmartSweep, 700);
     }
   });
 
   init();
+
+  // 主按鈕可見時隱藏右下角 FAB
+  const fabNext = document.getElementById('fab-next');
+  const mainBtn = document.getElementById('next-turn');
+  new IntersectionObserver(([entry]) => {
+    fabNext.classList.toggle('hidden', entry.isIntersecting);
+  }, { threshold: 0.5 }).observe(mainBtn);
 </script>
 </body>
 </html>
