@@ -160,7 +160,8 @@
     padding-left: 2px;
   }
 
-  .horse-list { display: flex; flex-direction: column; gap: 10px; }
+  .horse-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .horse-list > .empty { grid-column: 1 / -1; }
   .horse-card {
     display: flex;
     align-items: center;
@@ -503,6 +504,7 @@
   .stat-pill.mut strong { color: var(--accent-hover); }
   .stat-pill.mut { color: var(--accent-hover); }
   .stable-toggle {
+    grid-column: 1 / -1;
     margin-top: 4px;
     padding: 10px 16px;
     background: transparent;
@@ -734,6 +736,7 @@
     .race-reward { font-size: 16px; }
 
     .log { font-size: 14px; padding: 12px 14px; }
+    .horse-list { grid-template-columns: 1fr; }
     .all-race-btn { font-size: 12px; padding: 8px 12px 10px; }
     .major-event-banner { font-size: 12px; letter-spacing: 0.15em; padding: 8px 14px; }
     .soul-card { padding: 8px 12px; }
@@ -1053,7 +1056,7 @@
     const enemyScore = totalStats(enemy) * variance();
 
     const won = playerScore >= enemyScore;
-    const reward = won ? (isMajor ? 500 : 150) : (isMajor ? 80 : 30);
+    const reward = won ? (isMajor ? 1000 : 300) : (isMajor ? 150 : 60);
     game.money += reward;
     h.racedThisTurn = true;
 
