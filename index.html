@@ -717,7 +717,7 @@
     box-shadow: var(--raise-sm);
   }
 
-  /* 千年大典橫幅 */
+  /* 大典橫幅 */
   .major-event-banner {
     padding: 10px 18px;
     background: rgba(249,194,43,.1);
@@ -893,6 +893,76 @@
   }
   .stable-cap { font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em; }
   .stable-cap.full { color: #d96666; }
+
+  /* Stage E — bench / roster swap UI */
+  .bench-section { margin-top: 18px; }
+  .bench-empty { padding: 14px; text-align: center; color: var(--text-dim); font-size: 12px; border: 1px dashed var(--border); border-radius: 4px; }
+  .roster-swap-btn {
+    background: rgba(120, 130, 160, 0.15);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px; border-radius: 3px; cursor: pointer;
+    font-size: 12px; letter-spacing: 0.1em;
+    transition: background 0.12s;
+  }
+  .roster-swap-btn:hover { background: rgba(120, 130, 160, 0.3); }
+  .roster-swap-btn.demote { color: #d4a843; }
+  .roster-swap-btn.promote { color: #82c97b; }
+  .roster-swap-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .roster-actions {
+    display: flex; justify-content: center; gap: 12px; padding: 16px 0;
+  }
+  .phase-advance-btn {
+    background: linear-gradient(135deg, #b8932f, #d4a843);
+    color: #0d0e12; border: none; padding: 12px 28px; border-radius: 4px;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.2em; cursor: pointer;
+    transition: filter 0.12s;
+  }
+  .phase-advance-btn:hover { filter: brightness(1.1); }
+  .phase-advance-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Stage E — phase lock：依 subPhase 隱藏不相干區塊 */
+  body.subphase-event #breed-section,
+  body.subphase-event #market-section,
+  body.subphase-event #roster-actions,
+  body.subphase-event .race-btn,
+  body.subphase-event #all-race-btn,
+  body.subphase-event .roster-swap-btn,
+  body.subphase-event #fab-omni { display: none !important; }
+
+  body.subphase-roster #breed-section,
+  body.subphase-roster #market-section,
+  body.subphase-roster .race-btn,
+  body.subphase-roster #all-race-btn,
+  body.subphase-roster #fab-omni { display: none !important; }
+
+  body.subphase-racing #breed-section,
+  body.subphase-racing #market-section,
+  body.subphase-racing #roster-actions,
+  body.subphase-racing .roster-swap-btn { display: none !important; }
+
+  body.subphase-breeding .race-btn,
+  body.subphase-breeding #all-race-btn,
+  body.subphase-breeding #roster-actions,
+  body.subphase-breeding .roster-swap-btn,
+  body.subphase-breeding #fab-omni { display: none !important; }
+
+  /* 結束狀態 */
+  body.phase-end #breed-section,
+  body.phase-end #market-section,
+  body.phase-end #roster-actions,
+  body.phase-end .race-btn,
+  body.phase-end #all-race-btn,
+  body.phase-end .roster-swap-btn { display: none !important; }
+
+  /* 初始狀態（year 0 開局，未啟動任何階段）*/
+  body.phase-init #breed-section,
+  body.phase-init #market-section,
+  body.phase-init #roster-actions,
+  body.phase-init .race-btn,
+  body.phase-init #all-race-btn,
+  body.phase-init .roster-swap-btn,
+  body.phase-init #fab-omni { display: none !important; }
 
   /* 馬匹清單按鈕 */
   .roster-btn {
@@ -1256,24 +1326,35 @@
 
   <div class="top-bar">
     <div class="stat">
-      <span class="stat-label">紀年</span>
-      <span class="stat-value" id="year">0 / 30,000</span>
-      <span class="stat-sub" id="year-sub">剩 30 千年</span>
+      <span class="stat-label">紀元</span>
+      <span class="stat-value" id="year">0 / 30</span>
+      <span class="stat-sub" id="year-sub">剩 30 年</span>
     </div>
     <div class="stat">
       <span class="stat-label">資金</span>
       <span class="stat-value gold" id="money">1,000 G</span>
     </div>
-    <button class="primary" id="next-turn">下一個千年</button>
+    <button class="primary" id="next-turn">下一年</button>
   </div>
 
-  <div id="major-event-banner" class="major-event-banner" style="display:none">⚡ 千年大典 · 賽事獎金加倍、勝者獲賜技能</div>
+  <div id="major-event-banner" class="major-event-banner" style="display:none">⚡ 大典 · 賽事獎金加倍、勝者獲賜技能</div>
 
   <div class="section-header">
-    <div class="section-title">馬廄 <span class="stable-cap" id="stable-cap"></span></div>
+    <div class="section-title">先發名單 <span class="stable-cap" id="stable-cap"></span></div>
     <button class="all-race-btn" id="all-race-btn" disabled>全員出戰</button>
   </div>
   <div class="horse-list" id="horse-list"></div>
+
+  <div id="roster-actions" class="roster-actions">
+    <button class="phase-advance-btn" id="advance-roster-btn">整 隊 完 成 → 開 戰</button>
+  </div>
+
+  <div id="bench-section" class="bench-section">
+    <div class="section-header">
+      <div class="section-title">替補席 <span class="stable-cap" id="bench-cap"></span></div>
+    </div>
+    <div class="horse-list" id="bench-list"></div>
+  </div>
 
   <div class="info-toggle-wrap">
     <button class="info-toggle" id="info-toggle" aria-expanded="false" aria-controls="info-drawer">
@@ -1293,7 +1374,7 @@
         <div class="race-feed" id="race-feed"></div>
       </div>
 
-      <div>
+      <div id="breed-section">
         <div class="section-title">交配所</div>
         <div class="breeding-panel" id="breeding-panel">
           <div class="breed-grid">
@@ -1315,7 +1396,7 @@
         </div>
       </div>
 
-      <div>
+      <div id="market-section">
         <div class="section-header">
           <div class="section-title">黑市</div>
           <button class="buy-btn" id="buy-all-market-btn" disabled>全體購買</button>
@@ -1385,7 +1466,7 @@
 
   function statusFromAge(age) {
     if (age <= 0) return STATE_FOAL;
-    if (age <= 3) return STATE_PEAK;
+    if (age <= 4) return STATE_PEAK;
     return STATE_RETIRED;
   }
 
@@ -1501,7 +1582,7 @@
     B08: { id:'B08', type:'blue', name:'多產血脈', desc:'交配時藍特繼承率提升（單親 50→80%、雙親 70→85%）' },
     R01: { id:'R01', type:'red',  name:'燃盡',     desc:'每場出賽後速度永久 -1' },
     R02: { id:'R02', type:'red',  name:'玻璃骨',   desc:'非對應賽道戰力 -20%' },
-    R03: { id:'R03', type:'red',  name:'玻璃心',   desc:'千年大典必敗，無視戰力' },
+    R03: { id:'R03', type:'red',  name:'玻璃心',   desc:'大典必敗，無視戰力' },
     R04: { id:'R04', type:'red',  name:'孤傲',     desc:'參賽時自身所有特性效果失效（仍可遺傳）' },
     R05: { id:'R05', type:'red',  name:'短命血統', desc:'壽命縮短，Age 4 直接死亡' },
     R06: { id:'R06', type:'red',  name:'暴食',     desc:'每年消耗 80G 飼料費' },
@@ -1522,7 +1603,7 @@
     { id:'E_B04', kind:'trait', traitId:'B04', title:'鐵蹄傳承', desc:'將藍特「鐵蹄」(爬山地形+10%) 賜予馬廄 OVR 最高的馬。' },
     { id:'E_B05', kind:'trait', traitId:'B05', title:'疾風傳承', desc:'將藍特「疾風步」(長平原+10%) 賜予馬廄 OVR 最高的馬。' },
     { id:'E_B06', kind:'trait', traitId:'B06', title:'起伏傳承', desc:'將藍特「起伏直覺」(起伏地形+10%) 賜予馬廄 OVR 最高的馬。' },
-    { id:'E_RARE', kind:'marketBuff', title:'稀有馬場', desc:'下個千年的黑市馬匹三圍全部 +15。' },
+    { id:'E_RARE', kind:'marketBuff', title:'稀有馬場', desc:'下一年的黑市馬匹三圍全部 +15。' },
     { id:'E_GOLD', kind:'gold', amount:5, title:'黃金祭壇', desc:'立即獲得 5G。' },
   ];
 
@@ -1552,7 +1633,7 @@
       addLog(`活動「${card.title}」→ ${target.name} 獲得藍特：${TRAIT_DATA[card.traitId].name}`, 'soul');
     } else if (card.kind === 'marketBuff') {
       game.nextMarketBuff = true;
-      addLog(`活動「${card.title}」→ 下個千年黑市馬匹 +15 三圍`, 'soul');
+      addLog(`活動「${card.title}」→ 下一年黑市馬匹 +15 三圍`, 'soul');
     } else if (card.kind === 'gold') {
       game.money += card.amount;
       addLog(`活動「${card.title}」→ 獲得 ${card.amount}G`, 'soul');
@@ -1761,10 +1842,17 @@
     breedFatherId: null,
     breedMotherId: null,
     stableSize: 6,
+    bench: [],
+    subPhase: null, // 'roster' | 'racing' | 'breeding' | null (event turn)
+    batchRacedThisTurn: false,
     nextMarketBuff: false,
     pendingChoice: null, // { kind: 'event'|'mark', cards: [...], context: {...} }
     pendingChoiceQueue: [],
   };
+
+  function allOwnedHorses() {
+    return [...game.horses, ...game.bench];
+  }
 
   function pushPending(choice) {
     if (!choice) return;
@@ -1782,7 +1870,7 @@
       makeHorse({ age: 3 })
     ];
     game.market = Array.from({ length: 4 }, makeMarketHorse);
-    addLog(`紀年 0 · 馬廄入駐 ${game.horses.length} 匹馬，等候千年的審判。`);
+    addLog(`第 0 年 · 馬廄入駐 ${game.horses.length} 匹馬，等候惡魔之王的審判。`);
     render();
   }
 
@@ -1808,7 +1896,9 @@
       addLog(`🏛 馬廄擴建 → ${game.stableSize} 格`, 'soul');
     }
 
-    for (const h of game.horses) {
+    game.batchRacedThisTurn = false;
+
+    for (const h of allOwnedHorses()) {
       h.age += 1;
       h.status = statusFromAge(h.age);
       h.racedThisTurn = false;
@@ -1816,7 +1906,7 @@
     }
     let foodCost = 0;
     const foodEaters = [];
-    for (const h of game.horses) {
+    for (const h of allOwnedHorses()) {
       if (h.traits && h.traits.displayed.some(t => t.id === 'R06')) {
         foodCost += 1;
         foodEaters.push(h.name);
@@ -1826,25 +1916,30 @@
       game.money = Math.max(0, game.money - foodCost);
       addLog(`暴食特性 −${foodCost}G 飼料費（${foodEaters.join('、')}）`, 'death');
     }
+
     const ascending = [];
     const reborn = [];
-    for (let i = game.horses.length - 1; i >= 0; i--) {
-      const h = game.horses[i];
-      const hasR05 = h.traits && h.traits.displayed.some(t => t.id === 'R05');
-      if (h.age >= (hasR05 ? 4 : 5)) {
-        const hasG02 = h.traits && h.traits.displayed.some(t => t.id === 'G02');
-        if (hasG02 && Math.random() < 0.30) {
-          h.age = 0;
-          h.status = STATE_FOAL;
-          h.racedThisTurn = false;
-          h.bredThisTurn = false;
-          h.traits.displayed = h.traits.displayed.filter(t => t.id !== 'G02');
-          reborn.push(h.name);
-        } else {
-          ascending.push(game.horses.splice(i, 1)[0]);
+    const ageOutFromArray = (arr) => {
+      for (let i = arr.length - 1; i >= 0; i--) {
+        const h = arr[i];
+        const hasR05 = h.traits && h.traits.displayed.some(t => t.id === 'R05');
+        if (h.age >= (hasR05 ? 4 : 5)) {
+          const hasG02 = h.traits && h.traits.displayed.some(t => t.id === 'G02');
+          if (hasG02 && Math.random() < 0.30) {
+            h.age = 0;
+            h.status = STATE_FOAL;
+            h.racedThisTurn = false;
+            h.bredThisTurn = false;
+            h.traits.displayed = h.traits.displayed.filter(t => t.id !== 'G02');
+            reborn.push(h.name);
+          } else {
+            ascending.push(arr.splice(i, 1)[0]);
+          }
         }
       }
-    }
+    };
+    ageOutFromArray(game.horses);
+    ageOutFromArray(game.bench);
     if (reborn.length) {
       addLog(`🔥 鳳凰之血燃燒：${reborn.join('、')} 以幼駒姿態重生！`, 'soul');
     }
@@ -1852,6 +1947,7 @@
       game.souls.push(...ascending);
       addLog(`升入靈魂區：${ascending.map(h => h.name).join('、')}`, 'soul');
     }
+    promoteFromBench();
 
     const buffApplied = game.nextMarketBuff;
     game.market = Array.from({ length: 4 }, makeMarketHorse);
@@ -1868,23 +1964,68 @@
       game.nextMarketBuff = false;
     }
 
-    const phaseTag = game.currentTurnPhase === 'major' ? '〔千年大典〕 '
+    const phaseTag = game.currentTurnPhase === 'major' ? '〔大典〕 '
                    : game.currentTurnPhase === 'race'  ? '〔小賽事〕 '
                    : '〔活動〕 ';
-    addLog(`${phaseTag}紀年 ${game.yearsElapsed.toLocaleString()} · 千年流逝。`);
+    addLog(`${phaseTag}第 ${currentTurn} 年 · 一年過去。`);
 
     if (game.currentTurnPhase === 'event') {
+      game.subPhase = null;
       pushPending(makeEventChoice());
+    } else {
+      game.subPhase = 'roster';
     }
 
     if (game.yearsElapsed >= game.maxYears) {
-      addLog(`時辰已盡 · 30 個千年皆已過去。`);
+      addLog(`時辰已盡 · 30 年皆已過去。`);
     }
+    render();
+  }
+
+  function promoteFromBench() {
+    // 老化後若 active 有空位，從 bench 補強（OVR 高優先），不是強制 — 玩家仍可手動換場
+    while (game.horses.length < game.stableSize && game.bench.length) {
+      game.bench.sort((a, b) => ovrOf(b) - ovrOf(a));
+      game.horses.push(game.bench.shift());
+    }
+  }
+
+  function moveToBench(horseId) {
+    const idx = game.horses.findIndex(h => h.id === horseId);
+    if (idx < 0) return;
+    game.bench.push(game.horses.splice(idx, 1)[0]);
+    render();
+  }
+  function moveToRoster(horseId) {
+    if (game.horses.length >= game.stableSize) {
+      addLog(`先發名單已滿（${game.stableSize}/${game.stableSize}），請先下放某匹再上場。`, 'death');
+      render();
+      return;
+    }
+    const idx = game.bench.findIndex(h => h.id === horseId);
+    if (idx < 0) return;
+    game.horses.push(game.bench.splice(idx, 1)[0]);
+    render();
+  }
+  function advanceFromRoster() {
+    if (game.subPhase !== 'roster') return;
+    game.subPhase = 'racing';
+    if (getRaceBatch().length === 0) {
+      // 無 PEAK 馬可參賽 → 跳過直接到育馬
+      advanceFromRacing();
+    } else {
+      render();
+    }
+  }
+  function advanceFromRacing() {
+    if (game.subPhase !== 'racing') return;
+    game.subPhase = 'breeding';
     render();
   }
 
   function getRaceBatch() {
     if (game.currentTurnPhase === 'event') return [];
+    if (game.subPhase && game.subPhase !== 'racing') return [];
     const eligible = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn);
     if (!game.currentTurnMajor) return eligible;
     const racedCount = game.horses.filter(h => h.racedThisTurn).length;
@@ -1897,48 +2038,56 @@
   }
 
   function runAllRaces() {
+    if (game.subPhase !== 'racing') return;
     const batch = getRaceBatch();
-    if (!batch.length) return;
-    batch.forEach(h => runRace(h.id));
-    if (!game.infoDrawerOpen) {
-      game.infoDrawerOpen = true;
-      render();
-      requestAnimationFrame(() =>
-        document.getElementById('info-toggle').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    if (!batch.length) {
+      advanceFromRacing();
+      return;
     }
+    batch.forEach(h => runRace(h.id));
+    game.batchRacedThisTurn = true;
+    // 賽完直接進育馬時間
+    advanceFromRacing();
   }
 
   function buyMarketHorse(marketId) {
-    if (game.currentTurnPhase === 'event') return;
+    if (game.subPhase !== 'breeding') return;
     const idx = game.market.findIndex(m => m.id === marketId);
     if (idx < 0) return;
     const horse = game.market[idx];
     if (game.money < horse.price) return;
-    if (game.horses.length >= game.stableSize) {
-      addLog(`馬廄已滿（${game.stableSize}/${game.stableSize}），無法買入 ${horse.name}。`, 'death');
-      render();
-      return;
-    }
     const price = horse.price;
     delete horse.price;
     game.money -= price;
-    game.horses.push(horse);
+    // 新買的馬當年不可參賽、不可交配
+    horse.racedThisTurn = true;
+    horse.bredThisTurn = true;
+    const benched = game.horses.length >= game.stableSize;
+    if (benched) {
+      game.bench.push(horse);
+    } else {
+      game.horses.push(horse);
+    }
     game.market.splice(idx, 1);
-    addLog(`購入：${horse.name}（${horse.gender === 'male' ? '公' : '母'}） −${price.toLocaleString()}G`);
+    addLog(`購入：${horse.name}（${horse.gender === 'male' ? '公' : '母'}） −${price.toLocaleString()}G${benched ? '〔送往替補席〕' : ''}`);
     render();
   }
 
   let __cardSilent = false;
   function breed(fatherId, motherId) {
-    if (game.currentTurnPhase === 'event') return null;
+    if (game.subPhase !== 'breeding') return null;
+    // 只看 active roster — bench 馬不能交配（沒參賽）
     const father = game.horses.find(h => h.id === fatherId);
     const mother = game.horses.find(h => h.id === motherId);
     if (!father || !mother) return null;
     if (father.age < 1 || father.age > 4 || mother.age < 1 || mother.age > 4) return null;
     if (father.gender !== 'male' || mother.gender !== 'female') return null;
-    if (mother.bredThisTurn) return null;
-    if (game.horses.length >= game.stableSize) {
-      if (!__cardSilent) addLog(`馬廄已滿（${game.stableSize}/${game.stableSize}），${mother.name} 暫緩交配。`, 'death');
+    if (!father.racedThisTurn || !mother.racedThisTurn) {
+      if (!__cardSilent) addLog(`雙親必須在當年參賽過才能交配。`, 'death');
+      return null;
+    }
+    if (father.bredThisTurn) {
+      if (!__cardSilent) addLog(`公馬 ${father.name} 當年已交配過 1 胎。`, 'death');
       return null;
     }
 
@@ -1996,7 +2145,15 @@
       child.speed = Math.min(115, child.speed + 15);
     }
 
-    game.horses.push(child);
+    // 子代當年不能參賽、不能交配
+    child.racedThisTurn = true;
+    child.bredThisTurn = true;
+    if (game.horses.length < game.stableSize) {
+      game.horses.push(child);
+    } else {
+      game.bench.push(child);
+    }
+    father.bredThisTurn = true;
     mother.bredThisTurn = true;
 
     const eventStr = events.length ? `〔${events.join('、')}〕` : '';
@@ -2069,7 +2226,7 @@
     });
     if (game.races.length > 5) game.races.length = 5;
 
-    const majorTag = isMajor ? '〔千年大典〕 ' : '';
+    const majorTag = isMajor ? '〔大典〕 ' : '';
     const skillTag = newSkill ? ` 獲得技能：${newSkill.name}` : '';
     const traitTag = traitMult !== 1 ? ` [特性×${traitMult.toFixed(2)}]` : '';
     const r03Tag = r03Forced ? ' 💔玻璃心崩潰' : '';
@@ -2127,17 +2284,25 @@
 
   function getSmartBreedPairs() {
     const breedAge = h => h.age >= 1 && h.age <= 4;
-    const eligibleMales = game.horses.filter(h => breedAge(h) && h.gender === 'male');
+    const eligible = h => breedAge(h) && h.racedThisTurn;
+    const malePool = game.horses.filter(h => eligible(h) && h.gender === 'male' && !h.bredThisTurn);
     const eligibleFemales = game.horses
-      .filter(h => breedAge(h) && h.gender === 'female' && !h.bredThisTurn)
+      .filter(h => eligible(h) && h.gender === 'female')
       .sort((a, b) => ovrOf(b) - ovrOf(a));
-    if (!eligibleMales.length || !eligibleFemales.length) return [];
-    return eligibleFemales.map(mother => {
-      const father = eligibleMales.reduce((best, candidate) =>
+    if (!malePool.length || !eligibleFemales.length) return [];
+    // 公馬 1 胎/年 → 每隻公馬最多配對一次。母馬從高 OVR 開始挑她最好的可用公馬。
+    const usedMales = new Set();
+    const pairs = [];
+    for (const mother of eligibleFemales) {
+      const available = malePool.filter(m => !usedMales.has(m.id));
+      if (!available.length) break;
+      const father = available.reduce((best, candidate) =>
         breedPairScore(candidate, mother) > breedPairScore(best, mother) ? candidate : best
       );
-      return { father, mother, score: breedPairScore(father, mother) };
-    });
+      usedMales.add(father.id);
+      pairs.push({ father, mother, score: breedPairScore(father, mother) });
+    }
+    return pairs;
   }
 
   function buyAllMarket() {
@@ -2288,22 +2453,26 @@
 
   function render() {
     const remaining = (game.maxYears - game.yearsElapsed) / game.yearPerTurn;
-    document.getElementById('year').textContent =
-      `${game.yearsElapsed.toLocaleString()} / 30,000`;
+    const turnNum = game.yearsElapsed / game.yearPerTurn;
+    document.getElementById('year').textContent = `${turnNum} / 30`;
     document.getElementById('year-sub').textContent =
-      remaining > 0 ? `剩 ${remaining} 千年` : '終局';
+      remaining > 0 ? `剩 ${remaining} 年` : '終局';
     document.getElementById('money').textContent = `${game.money.toLocaleString()} G`;
 
     const btn = document.getElementById('next-turn');
     const blockedByChoice = !!game.pendingChoice;
-    btn.disabled = game.yearsElapsed >= game.maxYears || blockedByChoice;
+    const inMidTurnFlow = game.subPhase === 'roster' || game.subPhase === 'racing';
+    btn.disabled = game.yearsElapsed >= game.maxYears || blockedByChoice || inMidTurnFlow;
     btn.textContent = game.yearsElapsed >= game.maxYears ? '時辰已盡'
                     : blockedByChoice ? '請先做出選擇'
-                    : '下一個千年';
+                    : game.subPhase === 'roster' ? '請先整隊出戰'
+                    : game.subPhase === 'racing' ? '請先完賽'
+                    : '下一年';
     const fabBtn = document.getElementById('fab-next');
     fabBtn.disabled = btn.disabled;
     fabBtn.textContent = game.yearsElapsed >= game.maxYears ? '終局'
                        : blockedByChoice ? '選擇'
+                       : inMidTurnFlow ? '進行中'
                        : '下一年';
 
     const omniAction = getOmniAction();
@@ -2324,18 +2493,38 @@
 
     const phaseBanner = document.getElementById('major-event-banner');
     if (game.yearsElapsed > 0 && game.yearsElapsed < game.maxYears + 1) {
+      const subLabel = game.subPhase === 'roster' ? '〔整隊〕'
+                     : game.subPhase === 'racing' ? '〔賽事〕'
+                     : game.subPhase === 'breeding' ? '〔育馬〕'
+                     : '';
       if (game.currentTurnPhase === 'major') {
         phaseBanner.style.display = 'block';
-        phaseBanner.textContent = '⚡ 千年大典 · 賽事獎金加倍、勝者獲賜技能與印記';
+        phaseBanner.textContent = `⚡ 大典 ${subLabel} · 賽事獎金加倍、勝者獲賜技能與印記`;
       } else if (game.currentTurnPhase === 'race') {
         phaseBanner.style.display = 'block';
-        phaseBanner.textContent = '🏇 小賽事千年 · 全員出戰賺取黃金';
+        phaseBanner.textContent = `🏇 小賽事 ${subLabel} · 全員出戰賺取黃金`;
       } else {
         phaseBanner.style.display = 'block';
-        phaseBanner.textContent = '✨ 活動千年 · 三選一獎勵';
+        phaseBanner.textContent = '✨ 活動 · 三選一獎勵';
       }
     } else {
       phaseBanner.style.display = 'none';
+    }
+
+    // Body class for phase lock
+    document.body.classList.remove('subphase-event','subphase-roster','subphase-racing','subphase-breeding','phase-end','phase-init');
+    if (game.yearsElapsed >= game.maxYears) {
+      document.body.classList.add('phase-end');
+    } else if (game.yearsElapsed === 0) {
+      document.body.classList.add('phase-init');
+    } else if (game.currentTurnPhase === 'event') {
+      document.body.classList.add('subphase-event');
+    } else if (game.subPhase) {
+      document.body.classList.add('subphase-' + game.subPhase);
+    }
+    // 進入 breeding 自動展開資訊欄看交配 / 黑市
+    if (game.subPhase === 'breeding' && !game.infoDrawerOpen) {
+      game.infoDrawerOpen = true;
     }
 
     const smartPairs = getSmartBreedPairs();
@@ -2354,7 +2543,7 @@
     } else {
       feed.innerHTML = game.races.map(r => `
         <div class="race-entry ${r.won ? 'win' : 'loss'}${r.isMajor ? ' major' : ''}">
-          <span class="race-year">${r.isMajor ? '⚡ ' : ''}紀年 ${r.year.toLocaleString()}${r.raceType ? ' · ' + r.raceType : ''}${r.raceAttr ? ` <span class="attr-badge attr-${r.raceAttr}">${ATTR_LABEL[r.raceAttr]||r.raceAttr}</span>` : ''}${r.raceTerrain ? `<span class="terrain-badge">${r.raceTerrain}</span>` : ''}</span>
+          <span class="race-year">${r.isMajor ? '⚡ ' : ''}第 ${r.year / 1000} 年${r.raceType ? ' · ' + r.raceType : ''}${r.raceAttr ? ` <span class="attr-badge attr-${r.raceAttr}">${ATTR_LABEL[r.raceAttr]||r.raceAttr}</span>` : ''}${r.raceTerrain ? `<span class="terrain-badge">${r.raceTerrain}</span>` : ''}</span>
           <span class="race-matchup">
             <span class="player">${r.player.name}</span><span class="score">[${r.player.score}]</span>
             <span class="vs">VS</span>
@@ -2366,16 +2555,19 @@
       `).join('');
     }
 
+    // 育種：只看 active roster + 當年參賽過 + 年齡 1–4
     const breedAge = h => h.age >= 1 && h.age <= 4;
-    const males   = game.horses.filter(h => breedAge(h) && h.gender === 'male');
-    const females = game.horses.filter(h => breedAge(h) && h.gender === 'female');
+    const breedEligible = h => breedAge(h) && h.racedThisTurn;
+    const males   = game.horses.filter(h => breedEligible(h) && h.gender === 'male');
+    const females = game.horses.filter(h => breedEligible(h) && h.gender === 'female');
     if (!males.find(h => h.id === game.breedFatherId)) game.breedFatherId = null;
     const selF = females.find(h => h.id === game.breedMotherId);
-    if (!selF || selF.bredThisTurn) game.breedMotherId = null;
+    if (!selF) game.breedMotherId = null;
 
     const cardHtml = (h, role) => {
       const sel = (role === 'male' ? game.breedFatherId : game.breedMotherId) === h.id;
-      const disabled = role === 'female' && h.bredThisTurn;
+      // 公馬：1 胎/年；母馬：無限制
+      const disabled = role === 'male' && h.bredThisTurn;
       const cls = `breed-card${sel ? ' selected' : ''}${disabled ? ' disabled' : ''}`;
       const ageTag = disabled ? '已配' : `${h.age}歲`;
       return `
@@ -2392,19 +2584,19 @@
     };
     const maleListEl   = document.getElementById('breed-male-list');
     const femaleListEl = document.getElementById('breed-female-list');
-    maleListEl.innerHTML   = males.length   ? males.map(h => cardHtml(h, 'male')).join('')     : `<div class="breed-empty">無 1–4 歲公馬</div>`;
-    femaleListEl.innerHTML = females.length ? females.map(h => cardHtml(h, 'female')).join('') : `<div class="breed-empty">無 1–4 歲母馬</div>`;
+    maleListEl.innerHTML   = males.length   ? males.map(h => cardHtml(h, 'male')).join('')     : `<div class="breed-empty">無已參賽公馬（須當年完賽）</div>`;
+    femaleListEl.innerHTML = females.length ? females.map(h => cardHtml(h, 'female')).join('') : `<div class="breed-empty">無已參賽母馬（須當年完賽）</div>`;
 
     const breedBtnEl = document.getElementById('breed-btn');
-    const father = males.find(h => h.id === game.breedFatherId);
-    const mother = females.find(h => h.id === game.breedMotherId && !h.bredThisTurn);
+    const father = males.find(h => h.id === game.breedFatherId && !h.bredThisTurn);
+    const mother = females.find(h => h.id === game.breedMotherId);
     const pairEl = document.getElementById('breed-pair-display');
     pairEl.innerHTML = (father && mother)
       ? `<span class="pair-name">${father.name}</span><span class="pair-x">×</span><span class="pair-name">${mother.name}</span>`
       : `<span style="opacity:.5">— 各選一隻公母即可看博士建言 —</span>`;
     breedBtnEl.disabled = !(father && mother);
-    const fertileFemales = females.filter(h => !h.bredThisTurn);
-    document.getElementById('breed-all-btn').disabled = !males.length || !fertileFemales.length;
+    const fertileMales = males.filter(h => !h.bredThisTurn);
+    document.getElementById('breed-all-btn').disabled = !fertileMales.length || !females.length;
     document.getElementById('breed-all-btn').textContent = smartPairs.length ? `智能交配 (${smartPairs.length})` : '智能交配';
 
     const vetBlock = document.getElementById('vet-advice-block');
@@ -2424,7 +2616,7 @@
 
     const marketList = document.getElementById('market-list');
     if (!game.market.length) {
-      marketList.innerHTML = `<div class="empty">黑市清空，待下一個千年補貨。</div>`;
+      marketList.innerHTML = `<div class="empty">黑市清空，待下一年補貨。</div>`;
     } else {
       marketList.innerHTML = game.market.map(m => `
         <div class="market-card">
@@ -2464,6 +2656,7 @@
         const raceBtn = h.status === STATE_PEAK
           ? `<button class="race-btn" data-id="${h.id}" ${(h.racedThisTurn || majorFull) ? 'disabled' : ''}>${h.racedThisTurn ? '已參賽' : majorFull ? '名額已滿' : '參加賽事'}</button>`
           : '';
+        const swapBtn = `<button class="roster-swap-btn demote" data-bench-id="${h.id}">下放替補 ▾</button>`;
         const eSpd = effectiveStat(h, 'speed'), ePow = effectiveStat(h, 'power'), eSta = effectiveStat(h, 'stamina');
         const traitBadges = h.traits ? h.traits.displayed.map(t => {
           const td = TRAIT_DATA[t.id];
@@ -2499,6 +2692,7 @@
               <span class="age ${ageDim}">${h.age} 歲</span>
             </div>
             ${raceBtn}
+            ${swapBtn}
           </div>
         `;
       }).join('');
@@ -2509,6 +2703,60 @@
 
       list.innerHTML = cards + toggle;
     }
+
+    // Bench list
+    const benchListEl = document.getElementById('bench-list');
+    const benchCapEl = document.getElementById('bench-cap');
+    if (benchCapEl) benchCapEl.textContent = `${game.bench.length} 匹`;
+    if (benchListEl) {
+      if (!game.bench.length) {
+        benchListEl.innerHTML = `<div class="bench-empty">替補席尚無馬匹。</div>`;
+      } else {
+        const sortedBench = [...game.bench].sort((a, b) => ovrOf(b) - ovrOf(a));
+        const activeFull = game.horses.length >= game.stableSize;
+        benchListEl.innerHTML = sortedBench.map(h => {
+          const mut = h.mutated || {};
+          const eSpd = effectiveStat(h, 'speed'), ePow = effectiveStat(h, 'power'), eSta = effectiveStat(h, 'stamina');
+          const traitBadges = h.traits ? h.traits.displayed.map(t => {
+            const td = TRAIT_DATA[t.id];
+            return td ? `<span class="trait-badge ${t.type}" data-tooltip="${td.desc}">${td.name}</span>` : '';
+          }).join('') : '';
+          const markBadges = (h.marks || []).map(m => {
+            const md = MARK_DATA[m.id];
+            return md ? `<span class="mark-badge" data-tooltip="${md.desc}">★ ${md.name}</span>` : '';
+          }).join('');
+          const recessiveWarn = h.traits && h.traits.recessiveFlags.length
+            ? `<span class="trait-warning">⚠ 不詳因子</span>` : '';
+          const rarityId = (typeof window.rarityOf === 'function') ? window.rarityOf(h).id : '';
+          return `
+            <div class="horse-card" data-id="${h.id}"${rarityId ? ` data-rarity="${rarityId}"` : ''} style="opacity:.85">
+              <div class="horse-info">
+                <div class="horse-name-row">
+                  <span class="horse-name">${h.name}</span>
+                  <span class="gender ${h.gender}">${h.gender === 'male' ? '公' : '母'}</span>
+                </div>
+                <div class="stats-row">
+                  <span class="stat-pill ${mut.speed ? 'mut' : ''}">速度 <strong>${eSpd}</strong></span>
+                  <span class="stat-pill ${mut.power ? 'mut' : ''}">力量 <strong>${ePow}</strong></span>
+                  <span class="stat-pill ${mut.stamina ? 'mut' : ''}">體力 <strong>${eSta}</strong></span>
+                </div>
+                ${(traitBadges || markBadges || recessiveWarn) ? `<div class="trait-row">${markBadges}${traitBadges}${recessiveWarn}</div>` : ''}
+              </div>
+              <div class="horse-meta">
+                <span class="ovr">OVR ${ovrOf(h)}</span>
+                ${h.skill ? `<span class="skill-badge">${h.skill.name}</span>` : ''}
+                <span class="age dim">${h.age} 歲</span>
+              </div>
+              <button class="roster-swap-btn promote" data-roster-id="${h.id}" ${activeFull ? 'disabled' : ''}>${activeFull ? '先發已滿' : '上場 ▴'}</button>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Roster advance button only valid in roster sub-phase
+    const rosterBtn = document.getElementById('advance-roster-btn');
+    if (rosterBtn) rosterBtn.disabled = game.subPhase !== 'roster';
 
     const soulListEl = document.getElementById('soul-list');
     if (!game.souls.length) {
@@ -2607,7 +2855,7 @@
           .sort((a, b) => ovrOf(b) - ovrOf(a))[0];
         target = candidate ? `→ 將施加於 ${candidate.name}` : '→ 無對象（將浪費）';
       } else if (c.kind === 'marketBuff') {
-        target = '→ 影響下個千年的黑市';
+        target = '→ 影響下一年的黑市';
       } else if (c.kind === 'gold') {
         target = `→ +${c.amount}G`;
       } else if (c.kind === 'mark') {
@@ -2663,12 +2911,24 @@
       runRace(raceBtn.dataset.id);
       return;
     }
+    const demoteBtn = e.target.closest('.roster-swap-btn.demote');
+    if (demoteBtn) {
+      moveToBench(demoteBtn.dataset.benchId);
+      return;
+    }
     const toggle = e.target.closest('.stable-toggle');
     if (toggle) {
       game.stableExpanded = !game.stableExpanded;
       render();
     }
   });
+  document.getElementById('bench-list').addEventListener('click', (e) => {
+    const promoteBtn = e.target.closest('.roster-swap-btn.promote');
+    if (promoteBtn && !promoteBtn.disabled) {
+      moveToRoster(promoteBtn.dataset.rosterId);
+    }
+  });
+  document.getElementById('advance-roster-btn').addEventListener('click', advanceFromRoster);
   document.getElementById('buy-all-market-btn').addEventListener('click', smartBuy);
   document.getElementById('market-list').addEventListener('click', (e) => {
     const btn = e.target.closest('.buy-btn');

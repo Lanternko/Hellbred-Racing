@@ -8,6 +8,7 @@
 - **Layout**:
   - `index.html` — 遊戲本體（Claude artifact 產出後存於此）
   - `names.js` — 馬匹命名系統（6 風格字庫，獨立檔以避免污染 index.html）
+  - `card.js` / `card.css` — 馬匹詳細卡片（稀有度判定 / 翻牌 modal / 馬廄 rarity 主題）
   - `prompts/` — 三段式交接 prompt（step-1 / 2 / 3）
   - `memory/playtest_notes.md` — 數值崩壞觀察紀錄
   - `CLAUDE.md` — 此檔（SSoT）
@@ -24,30 +25,24 @@ open index.html
 - 每次互動明說「use playwright mcp to ...」，否則 Claude 會 fallback 去讀 HTML 純文字幻想結果。樣板：「use playwright mcp to open `file://.../index.html`, screenshot, click 下一個千年, screenshot again, report what changed」。
 
 ## Current state (as of 2026-04-27)
-Stage A + B + C + D 已實作。**Stage E**（替補席 + 賽事優先 + Phase Lock）2026-04-27 實作中。
-**命名系統**（`names.js`）2026-04-27 完成：6 風格（中華/美式/原民/神話/日式/機械龐克）+ 姓氏繼承強者/名字取自弱者 origin + 英文姓後置。
+Stage A + B + C + D + 命名系統 + 卡片系統已實作。**Stage E**（替補席 + 賽事優先 + Phase Lock）實作中。
 
-**Stage A**：均值回歸交配 + 母馬限回合限 1 次 + OVR 排序 + 馬廄展開 + 突變紅字
-**Stage B**：靈魂區 + Ragnarök + 大典 + 技能 + 一鍵掃蕩
-**Stage C**：特性系統（藍/紅/金）+ 獸醫建言 + 馬匹清單 modal
-**Stage D**：6-turn cycle + 馬廄 fix size + 金幣 down-scale + 印記
-**Stage E**：active/bench 分離 + 「參賽過才能交配」+ 公馬一胎/年（母馬不限）+ subPhase（整隊→賽事→育馬）+ 千年→年命名平民化
+- **A**：均值回歸交配 / 母馬限回合 1 次 / OVR 排序 / 馬廄展開 / 突變紅字
+- **B**：靈魂區 / Ragnarök / 大典 / 技能 / 一鍵掃蕩
+- **C**：特性系統（藍/紅/金）/ 獸醫建言 / 馬匹清單 modal
+- **D**：6-turn cycle / 馬廄 fix size / 金幣 down-scale / 印記
+- **E**：active/bench 分離 / 「參賽過才能交配」/ 公馬一胎/年 / subPhase / 千年→年
+- **命名/卡片**：6 風格姓名（強者姓 / 弱者 origin / 英文姓後置）+ 6 段稀有度 + 翻牌驚喜 + 卡片 rarity tint
+
 **設計哲學**：特性決定方向，數值決定下限。資訊 B方案（部分遮蔽）— 隱性僅顯示「血統中潛藏不詳因子」。
 
 ## Stage C 規格（已實作）
 
-**遺傳模型：**
-- 藍特（A型隱性）：雙親同位點 → 顯現 70%（B08 提升至 85%）；單親攜帶 → 隱性傳遞 50%（B08 提升至 80%）
-- 紅特（B型顯性）：單親 55% / 雙親 85% 繼承 + **3% 每育種突變率** + 初始馬 8% / 市場馬 12% 自然帶有
-- 金特（C型突變）：每育種 2% 機率，G01/G02 各半
+**遺傳：** 藍特 A 型隱性（雙親同位點 70% / 單親 50% 隱性，B08 提升至 85% / 80%）。紅特 B 型顯性（單親 55% / 雙親 85% + 3% 突變 + 初始 8% / 市場 12% 自然帶）。金特 2% 突變，G01/G02 各半。
 
-**藍特：** B01 蹄炎(火+8%) / B02 冰晶(冰+8%) / B03 沙漠之子(沙+8%) / B04 鐵蹄(爬山+10%) / B05 疾風步(長平原+10%) / B06 起伏直覺(起伏+10%) / **B07 共鳴體質**(每持有 1 個其他藍特 +3%) / **B08 多產血脈**(藍特繼承率提升)
+**特性清單：** 8 藍（B01–06 賽道/地形 +8–10%、B07 共鳴 / B08 多產）/ 6 紅（R01 燃盡 / R02 玻璃骨 / R03 玻璃心 / R04 孤傲 / R05 短命 / R06 暴食 -1G）/ 2 金（G01 地獄之王 / G02 鳳凰之血）。詳細 desc 見 [index.html](index.html) `TRAIT_DATA`。
 
-**紅特：** R01 燃盡(出賽後速度-1) / R02 玻璃骨(非對應賽道-20%) / **R03 玻璃心**(千年大典必敗) / **R04 孤傲**(自身特性失效仍可遺傳) / R05 短命(Age 4 死亡) / **R06 暴食**(每年 -80G)
-
-**金特：** G01 地獄之王(Ragnarök 全屬性匹配) / **G02 鳳凰之血**(死亡時 30% 重生為幼駒，一次性)
-
-**獸醫建言判定順序：** 金特共鳴 → 雙親紅特共鳴 → 單親紅特 → 隱性位點交集（含 B07/B08 暗示）→ 血統相性 fallback
+**獸醫建言順序：** 金特共鳴 → 雙親紅特共鳴 → 單親紅特 → 隱性位點交集 → 血統相性 fallback。
 
 **馬匹欄位：** `traits: { displayed: [], recessiveFlags: [] }`
 
@@ -106,16 +101,10 @@ CSS 隱藏不相干區塊（黑市/交配/race button/swap button）。
 yearsElapsed 內部仍是 1000 倍數，顯示時 `/ 1000`。
 
 ## Next actions
-- [x] Stage A/B 全部完成並部署
-- [x] **Stage C-1：特性系統** — 資料結構 + 遺傳邏輯 + UI badge + 戰力加乘（commit `864f83a`）
-- [x] **Stage C-2：獸醫建言** — 瓦拉克博士台詞庫 + 判定邏輯（commit `864f83a`）
-- [x] **Stage C-3：馬匹清單 modal** — 三 tab（commit `864f83a`）
-- [x] **特性擴充**：B07/B08/R03/R04/R06/G02 + 紅特自然生成（2026-04-27）
-- [x] **Stage D**：6-turn cycle + 馬廄 fix size + 金幣 down-scale + 活動 modal + 印記（commit `f269baa`）
+- [x] Stage A / B / C / D + 卡片系統已完成（最近：D commit `f269baa`，卡片 `fa67635`）
 - [ ] **Stage E**：替補席 + 賽事優先 + subPhase + 命名平民化（實作中）
-- [ ] **Stage C-4（暫緩）：世代育種資料庫**
 - [ ] **Playtest Run #2** — Stage E 完成後跑 1 場，觀察整隊→賽事→育馬節奏感 + 替補席策略價值
-- [ ] **TODO（解凍後）**：理財工具 / 花錢升級馬廄 / 印記 #3-5
+- [ ] **TODO（解凍後）**：理財工具 / 花錢升級馬廄 / 印記 #3-5 / Stage C-4 世代育種資料庫
 
 ## Frozen systems（MVP 期不做，違反前先停下來問本人）
 - **榮冠卡牌系統** — Why: 卡牌會與交配 / 賽事系統互相耦合，未驗證核心循環前加進去等於三系統一起重構。
@@ -127,19 +116,22 @@ yearsElapsed 內部仍是 1000 倍數，顯示時 `/ 1000`。
 > **解凍條件**（量化，缺一不可）：自己連玩 ≥ 5 場 30 回合 + ≥ 3 場主動「再開一局」 + 至少 1 個朋友玩 1 場後不靠講解能知道下一步該做什麼。詳見 [prompts/tinyprd.md](prompts/tinyprd.md) `Done = ?`。
 
 ## Game invariants（程式級不變式，三個 step 都不可違反）
-- 馬匹年齡是整數，每按一次「下一個千年」+1。
+- 馬匹年齡是整數，每按一次「下一年」+1。active + bench 一視同仁老化。
 - 馬匹性別在出生時隨機 50/50 決定後終身不變。
 - 三圍（速度 / 力量 / 體力）clamp 在 1–100，任何運算（含突變 / 劣化）後超出都要 clip。例外：**印記 M01 無瑕之眼** 將該馬速度上限提升至 115。
-- 5 歲從馬廄移除，進入靈魂區（`game.souls`）；靈魂區無上限，不參與日常賽事與交配。
+- 5 歲從 active 或 bench 移除，進入靈魂區（`game.souls`）；靈魂區無上限，不參與日常賽事與交配。
   - 例外：R05 短命血統馬 Age 4 就死亡，同樣進入靈魂區。
 - 每回合每匹馬最多參加一場賽事。
 - 突變 +20、劣化 -15 為硬編碼上限；同一項數值同回合最多觸發其一，不可疊加。
-- 子代出生時年齡 = 0、狀態 = 幼駒。
+- 子代出生時年齡 = 0、狀態 = 幼駒；當年 `racedThisTurn = true` & `bredThisTurn = true`（不可參賽 / 交配）。
 - 特性系統不可疊加相同類型：同一特性 id 不可重複加入 displayed。
 - 紅特 R04（孤傲）與藍特 B07（共鳴體質）共存時，孤傲優先壓制，但 B07 仍可傳遞給子代。
-- **馬廄容量為硬上限**：`game.horses.length ≤ game.stableSize`。滿時 `buyMarketHorse()` / `breed()` 拒絕並回傳錯誤訊息；不可悄悄丟棄馬匹。
-- **6-turn cycle 不可變**：T6/12/18/24/30 必為大典；T3/9/15/21/27 必為小賽事；其餘 turn 為活動 turn。`(turn - 1) % 6 + 1` 決定 phase。
-- **印記每馬最多 1 枚**：取得新印記時若已有印記，舊印記不被覆蓋（可遺傳但本馬不再吃新印記）。冠軍若已滿則跳過獎勵（不轉 fallback）。
+- **active roster 硬上限**：`game.horses.length ≤ game.stableSize`。滿時新買 / 新生馬自動進 `game.bench`，bench 無上限。
+- **6-turn cycle 不可變**：T6/12/18/24/30 必為大典；T3/9/15/21/27 必為小賽事；其餘 turn 為活動 turn。
+- **印記每馬最多 1 枚**：取得新印記時若已有印記，舊印記不被覆蓋（可遺傳但本馬不再吃新印記）。冠軍若已滿則跳過獎勵。
+- **交配前提**：雙親 `racedThisTurn === true`（必須當年完賽）。bench 馬不可交配。
+- **公馬一胎/年**：`father.bredThisTurn` 觸發即拒絕；母馬無此限制。
+- **subPhase 推進不可逆**：`roster → racing → breeding`；「下一年」按鈕僅在 breeding 或 event-modal-resolved 時可按。
 
 ## NEVER
 - **不要在 MVP 階段加 Frozen systems 列出的任何系統。** Why: 詳見上方 `Frozen systems` 區塊；解凍條件未達成前加進來會 (a) 互相耦合導致除錯失敗 (b) 撐爆 Claude 單 artifact 的 context，零基礎玩家無法歸因。
