@@ -867,6 +867,8 @@
   .fab-next, .fab-sweep {
     position: fixed;
     z-index: 150;
+    min-width: 124px;
+    text-align: center;
     padding: 14px 22px 16px;
     background: var(--accent);
     color: #fff;
@@ -883,7 +885,7 @@
   }
   .fab-next { bottom: 24px; right: 24px; opacity: 1; pointer-events: auto; transition: background 0.12s var(--ease-snap), transform 0.08s var(--ease-snap), opacity 0.2s ease; }
   .fab-next.hidden { opacity: 0; pointer-events: none; }
-  .fab-sweep { bottom: 24px; left: 56px; background: var(--c-2); border-color: var(--c-2); }
+  .fab-sweep { bottom: 80px; right: 24px; background: var(--c-2); border-color: var(--c-2); }
   .fab-sweep.sweeping { background: var(--c-12); border-color: var(--c-12); }
   .fab-next:hover:not(:disabled),
   .fab-sweep:hover:not(:disabled) { background: var(--accent-hover); }
@@ -985,9 +987,6 @@
     .soul-panel.open { transform: translateX(0); }
     .soul-panel-tab { display: none; }
     .soul-fab { display: flex; }
-
-    /* FAB sweep 左側要避開 soul-fab */
-    .fab-sweep { left: 50px; }
 
     /* Compact horse card stats on narrow screens */
     .horse-actions { flex-wrap: wrap; gap: 6px; }
