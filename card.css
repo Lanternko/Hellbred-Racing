@@ -22,18 +22,25 @@
 .card-overlay .card-flip {
   position: relative;
   width: 100%;
+  display: grid;
+  grid-template-areas: 'face';
   transform-style: preserve-3d;
   transition: transform 0.7s var(--ease-snap);
 }
 .card-overlay .card-flip.flipped { transform: rotateY(180deg); }
 .card-face {
+  grid-area: face;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  min-width: 0;
 }
 .card-face.card-back {
-  position: absolute;
-  inset: 0;
   transform: rotateY(180deg);
+}
+/* 讓 mystery 卡填滿 grid cell（與 front 高度對齊） */
+.card-face.card-back > .card-back-mystery {
+  height: 100%;
+  min-height: 420px;
 }
 
 .horse-card-detail {
