@@ -644,6 +644,61 @@
   .ragnarok-sub { font-size: 12px; color: var(--text-dim); letter-spacing: 0.15em; }
   .log-entry.soul { color: var(--c-5); }
 
+  /* 靈魂側欄 */
+  .soul-panel {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 260px;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    z-index: 200;
+    transform: translateX(calc(-100% + 32px));
+    transition: transform 0.25s var(--ease-snap);
+    box-shadow: 4px 0 16px rgba(0,0,0,.5);
+    display: flex;
+    flex-direction: row;
+  }
+  .soul-panel.open { transform: translateX(0); }
+  .soul-panel-tab {
+    width: 32px;
+    min-width: 32px;
+    background: rgba(139,155,180,.15);
+    color: var(--c-5);
+    border: none;
+    border-left: 3px solid var(--c-5);
+    writing-mode: vertical-lr;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s;
+    order: 2;
+    padding: 20px 0;
+  }
+  .soul-panel-tab:hover { background: rgba(139,155,180,.3); }
+  .soul-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 14px 20px;
+    order: 1;
+  }
+  .soul-panel-header {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.4em;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-pill.boosted { color: var(--gold); }
+  .stat-pill.boosted strong { color: var(--gold); }
+
   /* 行動版 (≤600px)：放大字級避免手機讀不到 */
   @media (max-width: 600px) {
     body { padding: 18px 14px; font-size: 16px; }
@@ -690,6 +745,13 @@
 </style>
 </head>
 <body>
+<div id="soul-panel" class="soul-panel">
+  <div class="soul-panel-content">
+    <div class="soul-panel-header">靈魂區</div>
+    <div id="soul-list" class="soul-list"></div>
+  </div>
+  <button class="soul-panel-tab" id="soul-panel-tab">靈魂區</button>
+</div>
 <div class="container">
   <header>
     <h1>地獄賽馬</h1>
@@ -719,9 +781,6 @@
   </div>
   <div class="horse-list" id="horse-list"></div>
 
-  <div class="section-title">靈魂區</div>
-  <div id="soul-list" class="soul-list"></div>
-
   <div class="section-title">交配所</div>
   <div class="breeding-panel">
     <select class="breeding-select" id="breed-father">
@@ -732,6 +791,7 @@
       <option value="">— 母馬 —</option>
     </select>
     <button class="breed-btn" id="breed-btn" disabled>交配</button>
+    <button class="breed-btn" id="breed-all-btn" disabled>全員交配</button>
   </div>
 
   <div class="section-title">黑市</div>
@@ -800,7 +860,12 @@
     };
   }
 
-  function totalStats(h) { return h.speed + h.power + h.stamina; }
+  function effectiveStat(h, stat) {
+    return h[stat] + (h.skill && h.skill.stat === stat ? h.skill.bonus : 0);
+  }
+  function totalStats(h) {
+    return effectiveStat(h, 'speed') + effectiveStat(h, 'power') + effectiveStat(h, 'stamina');
+  }
 
   function makeEnemy() {
     const turn = game.yearsElapsed / game.yearPerTurn;
@@ -847,7 +912,7 @@
   const REGRESSION_PULL = 0.2;
   const BREED_NOISE = 20;
 
-  const ovrOf = h => Math.round((h.speed + h.power + h.stamina) / 3);
+  const ovrOf = h => Math.round(totalStats(h) / 3);
 
   const game = {
     yearsElapsed: 0,
@@ -978,14 +1043,17 @@
     if (!h || h.status !== STATE_PEAK || h.racedThisTurn) return;
 
     const isMajor = game.currentTurnMajor;
+    if (isMajor) {
+      const alreadyRaced = game.horses.filter(x => x.racedThisTurn).length;
+      if (alreadyRaced >= 2) return;
+    }
     const enemy = makeEnemy();
     const variance = () => 0.8 + Math.random() * 0.4;
-    const skillBonus = h.skill ? h.skill.bonus : 0;
-    const playerScore = (totalStats(h) + skillBonus) * variance();
+    const playerScore = totalStats(h) * variance();
     const enemyScore = totalStats(enemy) * variance();
 
     const won = playerScore >= enemyScore;
-    const reward = won ? (isMajor ? 1500 : 500) : (isMajor ? 200 : 100);
+    const reward = won ? (isMajor ? 500 : 150) : (isMajor ? 80 : 30);
     game.money += reward;
     h.racedThisTurn = true;
 
@@ -1021,6 +1089,15 @@
     if (game.log.length > 30) game.log.length = 30;
   }
 
+  function breedAll() {
+    const retiredMales = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'male');
+    if (!retiredMales.length) return;
+    const bestMale = retiredMales.reduce((a, b) => ovrOf(a) >= ovrOf(b) ? a : b);
+    const eligibleFemales = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'female' && !h.bredThisTurn);
+    if (!eligibleFemales.length) return;
+    eligibleFemales.forEach(f => breed(bestMale.id, f.id));
+  }
+
   function triggerRagnarok() {
     if (!game.souls.length) {
       game.ragnarok = { champion: null, count: 0 };
@@ -1045,8 +1122,13 @@
 
     const allRaceBtn = document.getElementById('all-race-btn');
     const eligibleCount = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn).length;
-    allRaceBtn.disabled = eligibleCount === 0 || game.yearsElapsed >= game.maxYears;
-    allRaceBtn.textContent = eligibleCount > 0 ? `全員出戰 (${eligibleCount})` : '全員出戰';
+    const racedCount = game.horses.filter(h => h.racedThisTurn).length;
+    const majorSlots = game.currentTurnMajor ? Math.max(0, 2 - racedCount) : eligibleCount;
+    const effectiveEligible = game.currentTurnMajor ? Math.min(eligibleCount, majorSlots) : eligibleCount;
+    allRaceBtn.disabled = effectiveEligible === 0 || game.yearsElapsed >= game.maxYears;
+    allRaceBtn.textContent = game.currentTurnMajor
+      ? (majorSlots > 0 ? `大典出戰 (${effectiveEligible})` : '名額已滿')
+      : (eligibleCount > 0 ? `全員出戰 (${eligibleCount})` : '全員出戰');
 
     document.getElementById('major-event-banner').style.display =
       game.currentTurnMajor ? 'block' : 'none';
@@ -1084,6 +1166,7 @@
     fatherSel.disabled = !males.length;
     motherSel.disabled = !females.length;
     breedBtnEl.disabled = !(fatherSel.value && motherSel.value);
+    document.getElementById('breed-all-btn').disabled = !males.length || !females.length;
 
     const marketList = document.getElementById('market-list');
     if (!game.market.length) {
@@ -1121,12 +1204,13 @@
       const visible = showAll ? sorted : sorted.slice(0, 5);
       const hiddenCount = sorted.length - visible.length;
 
+      const majorFull = game.currentTurnMajor && game.horses.filter(h => h.racedThisTurn).length >= 2;
       const cards = visible.map(h => {
-        const canRace = h.status === STATE_PEAK;
-        const raceBtn = canRace
-          ? `<button class="race-btn" data-id="${h.id}" ${h.racedThisTurn ? 'disabled' : ''}>${h.racedThisTurn ? '已參賽' : '參加賽事'}</button>`
-          : '';
         const mut = h.mutated || {};
+        const raceBtn = h.status === STATE_PEAK
+          ? `<button class="race-btn" data-id="${h.id}" ${(h.racedThisTurn || majorFull) ? 'disabled' : ''}>${h.racedThisTurn ? '已參賽' : majorFull ? '名額已滿' : '參加賽事'}</button>`
+          : '';
+        const eSpd = effectiveStat(h, 'speed'), ePow = effectiveStat(h, 'power'), eSta = effectiveStat(h, 'stamina');
         return `
           <div class="horse-card" data-id="${h.id}">
             <div class="horse-info">
@@ -1135,9 +1219,9 @@
                 <span class="gender ${h.gender}">${h.gender === 'male' ? '公' : '母'}</span>
               </div>
               <div class="stats-row">
-                <span class="stat-pill ${mut.speed ? 'mut' : ''}">速度 <strong>${h.speed}</strong></span>
-                <span class="stat-pill ${mut.power ? 'mut' : ''}">力量 <strong>${h.power}</strong></span>
-                <span class="stat-pill ${mut.stamina ? 'mut' : ''}">體力 <strong>${h.stamina}</strong></span>
+                <span class="stat-pill ${mut.speed ? 'mut' : eSpd > h.speed ? 'boosted' : ''}">速度 <strong>${eSpd}</strong></span>
+                <span class="stat-pill ${mut.power ? 'mut' : ePow > h.power ? 'boosted' : ''}">力量 <strong>${ePow}</strong></span>
+                <span class="stat-pill ${mut.stamina ? 'mut' : eSta > h.stamina ? 'boosted' : ''}">體力 <strong>${eSta}</strong></span>
               </div>
             </div>
             <div class="horse-meta">
@@ -1204,10 +1288,18 @@
     }
   }
 
+  document.getElementById('soul-panel-tab').addEventListener('click', () => {
+    document.getElementById('soul-panel').classList.toggle('open');
+  });
   document.getElementById('next-turn').addEventListener('click', nextTurn);
   document.getElementById('all-race-btn').addEventListener('click', () => {
     const eligible = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn);
-    eligible.forEach(h => runRace(h.id));
+    if (game.currentTurnMajor) {
+      const slots = Math.max(0, 2 - game.horses.filter(h => h.racedThisTurn).length);
+      eligible.slice(0, slots).forEach(h => runRace(h.id));
+    } else {
+      eligible.forEach(h => runRace(h.id));
+    }
   });
   document.getElementById('horse-list').addEventListener('click', (e) => {
     const raceBtn = e.target.closest('.race-btn');
@@ -1238,6 +1330,7 @@
     if (!fatherSel.value || !motherSel.value) return;
     breed(fatherSel.value, motherSel.value);
   });
+  document.getElementById('breed-all-btn').addEventListener('click', breedAll);
   init();
 </script>
 </body>
