@@ -23,11 +23,20 @@ open index.html
 - 每次互動明說「use playwright mcp to ...」，否則 Claude 會 fallback 去讀 HTML 純文字幻想結果。樣板：「use playwright mcp to open `file://.../index.html`, screenshot, click 下一個千年, screenshot again, report what changed」。
 
 ## Current state (as of 2026-04-26)
-Run #1 跑完反饋「不好玩」→ Stage A 已套：均值回歸交配（regress 0.2 朝 50、noise ±10）+ 母馬一回合限 1 次 + OVR 顯示與排序 + 馬廄 top 5 + 展開 + 突變紅字視覺。已部署 GitHub Pages：https://lanternko.github.io/Hellbred-Racing/。Stage B 候選功能（靈魂區 / Ragnarök / 五行 / Course 地形）在 [memory/post-mvp-wishlist.md](memory/post-mvp-wishlist.md)，**等 Run #2 數據再決定哪條解凍**。
+Stage A + Stage B 已全部實作完畢，部署於 GitHub Pages：https://lanternko.github.io/Hellbred-Racing/
+
+**Stage A**（Run #1 反饋）：均值回歸交配 + 母馬限回合限 1 次 + OVR 顯示排序 + 馬廄 top 5 展開 + 突變紅字視覺
+**Stage B**（Run #1 解凍 2 條）：
+- 靈魂區（左側固定側欄）— 死馬進靈魂區而非消失
+- Ragnarök 終局決戰 — 30 回合後按「進入終局」，全員同場競技排名（含四天王 NPC）
+- 千年大典（每 5 回合）— 限 2 名出賽、勝者獲技能、+1000G
+- 技能系統（疾風/霸力/鋼魂）— 可使三圍超過 100、50% 繼承率
+- 一鍵掃蕩（左下角 FAB）— 自動推進，大典年暫停
 
 ## Next actions
 - [x] **MVP code (Step 1-3 + 🟢 視覺層)** — verified by Claude_Preview MCP
 - [x] **Stage A 修補（Run #1 反饋）** — 均值回歸 + 母馬限制 + OVR + top 5 + 突變紅字
+- [x] **Stage B（靈魂區 + Ragnarök + 千年大典 + 技能 + 掃蕩）** — 已部署
 - [x] **GitHub Pages** — https://lanternko.github.io/Hellbred-Racing/
 - [ ] **Playtest Run #2** — 自己連玩 1 場 + 1 朋友玩 → `memory/playtest_notes.md`
 - [ ] **依 Run #2 結果**：好玩 → 砍 wishlist；不好玩 → 從 wishlist 挑 1 條解凍
@@ -44,7 +53,7 @@ Run #1 跑完反饋「不好玩」→ Stage A 已套：均值回歸交配（regr
 - 馬匹年齡是整數，每按一次「下一個千年」+1。
 - 馬匹性別在出生時隨機 50/50 決定後終身不變。
 - 三圍（速度 / 力量 / 體力）clamp 在 1–100，任何運算（含突變 / 劣化）後超出都要 clip。
-- 5 歲一律從列表移除，不可保留為「博物館」或「種馬永久存檔」。
+- 5 歲從馬廄移除，進入靈魂區（`game.souls`）；靈魂區無上限，不參與日常賽事與交配。
 - 每回合每匹馬最多參加一場賽事。
 - 突變 +20、劣化 -15 為硬編碼上限；同一項數值同回合最多觸發其一，不可疊加。
 - 子代出生時年齡 = 0、狀態 = 幼駒。

@@ -647,11 +647,15 @@
   .ragnarok-battles {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin: 12px auto 4px;
-    max-width: 480px;
+    gap: 5px;
+    margin: 14px auto 8px;
+    max-width: 520px;
   }
-  .rag-battle {
+  @keyframes rag-appear {
+    from { opacity: 0; transform: translateX(-18px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .rag-rank-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -661,13 +665,15 @@
     font-family: var(--font-mono);
     font-size: 15px;
     letter-spacing: 0.04em;
+    animation: rag-appear 0.3s ease both;
   }
-  .rag-battle .king-name { color: var(--text-dim); }
-  .rag-battle .king-ovr  { color: var(--text-dim); font-size: 13px; }
-  .rag-battle .rag-score { font-size: 13px; color: var(--text-dim); }
-  .rag-battle.win .king-name { color: var(--text); }
-  .rag-battle.win .rag-verdict { color: var(--peak); font-weight: 700; }
-  .rag-battle.loss .rag-verdict { color: var(--accent-hover); font-weight: 700; }
+  .rag-rank-row.player { background: rgba(173,47,69,.25); border-left: 2px solid var(--gold); }
+  .rag-rank-row .rag-rank-num { color: var(--text-dim); min-width: 48px; text-align: left; }
+  .rag-rank-row.player .rag-rank-num { color: var(--gold); font-weight: 700; }
+  .rag-rank-row .rag-rank-name { flex: 1; text-align: left; padding-left: 8px; }
+  .rag-rank-row.player .rag-rank-name { color: var(--gold); }
+  .rag-rank-row .rag-rank-ovr { color: var(--text-dim); font-size: 13px; min-width: 60px; }
+  .rag-rank-row .rag-rank-score { color: var(--text-dim); font-size: 13px; min-width: 52px; text-align: right; }
   .log-entry.soul { color: var(--c-5); }
 
   /* 靈魂側欄 */
@@ -725,11 +731,9 @@
   .stat-pill.boosted { color: var(--gold); }
   .stat-pill.boosted strong { color: var(--gold); }
 
-  /* 右下角浮動按鈕 */
-  .fab-next {
+  /* 浮動按鈕（共用基底） */
+  .fab-next, .fab-sweep {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
     z-index: 150;
     padding: 14px 22px 16px;
     background: var(--accent);
@@ -745,8 +749,15 @@
     transition: background 0.12s var(--ease-snap),
                 transform 0.08s var(--ease-snap);
   }
-  .fab-next:hover:not(:disabled) { background: var(--accent-hover); }
-  .fab-next:active:not(:disabled) {
+  .fab-next { bottom: 24px; right: 24px; }
+  .fab-sweep { bottom: 24px; left: 56px; background: var(--c-2); border-color: var(--c-2); }
+  .fab-sweep.sweeping { background: var(--c-12); border-color: var(--c-12); }
+  .fab-next:hover:not(:disabled),
+  .fab-sweep:hover:not(:disabled) { background: var(--accent-hover); }
+  .fab-sweep:hover:not(:disabled) { background: var(--c-3); }
+  .fab-sweep.sweeping:hover:not(:disabled) { background: var(--c-12); filter: brightness(1.15); }
+  .fab-next:active:not(:disabled),
+  .fab-sweep:active:not(:disabled) {
     transform: translateY(2px);
     box-shadow: var(--raise-sm), 0 2px 8px rgba(0,0,0,.4);
   }
@@ -850,12 +861,12 @@
       <option value="">— 母馬 —</option>
     </select>
     <button class="breed-btn" id="breed-btn" disabled>交配</button>
-    <button class="breed-btn" id="breed-all-btn" disabled>全員交配</button>
+    <button class="breed-btn" id="breed-all-btn" disabled>一鍵交配</button>
   </div>
 
   <div class="section-header">
     <div class="section-title">黑市</div>
-    <button class="buy-btn" id="buy-all-market-btn" disabled>全部買入</button>
+    <button class="buy-btn" id="buy-all-market-btn" disabled>一鍵買入</button>
   </div>
   <div class="market-list" id="market-list"></div>
 
@@ -863,6 +874,7 @@
   <div id="ragnarok-banner" class="ragnarok-banner" style="display:none"></div>
 </div>
 
+<button class="fab-sweep" id="fab-sweep">一鍵掃蕩</button>
 <button class="fab-next" id="fab-next">下一年</button>
 
 <script>
@@ -996,8 +1008,10 @@
     log: [],
     stableExpanded: false,
     currentTurnMajor: false,
-    ragnarok: null
+    ragnarok: null,
+    sweeping: false,
   };
+  let sweepTimer = null;
 
   function init() {
     game.horses = [
@@ -1013,6 +1027,7 @@
   function nextTurn() {
     if (game.yearsElapsed >= game.maxYears) return;
     game.yearsElapsed += game.yearPerTurn;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const currentTurn = game.yearsElapsed / game.yearPerTurn;
     game.currentTurnMajor = currentTurn % 5 === 0;
@@ -1040,10 +1055,14 @@
     addLog(`${majorTag}紀年 ${game.yearsElapsed.toLocaleString()} · 千年流逝。`);
 
     if (game.yearsElapsed >= game.maxYears) {
+      game.sweeping = false;
+      clearTimeout(sweepTimer);
       addLog(`時辰已盡 · 30 個千年皆已過去。`);
-      triggerRagnarok();
     }
     render();
+    if (game.sweeping && !game.currentTurnMajor && game.yearsElapsed < game.maxYears) {
+      sweepTimer = setTimeout(nextTurn, 700);
+    }
   }
 
   function buyMarketHorse(marketId) {
@@ -1185,32 +1204,30 @@
     eligibleFemales.forEach(f => breed(bestMale.id, f.id));
   }
 
+  const RANK_LABELS = ['冠軍', '亞軍', '季軍'];
   function triggerRagnarok() {
-    const allFighters = [...game.souls, ...game.horses];
-    if (!allFighters.length) {
-      game.ragnarok = { champion: null, count: 0, battles: [], winsCount: 0 };
-      return;
-    }
-    const champion = allFighters.reduce((a, b) => ovrOf(a) >= ovrOf(b) ? a : b);
+    const playerFighters = [...game.souls, ...game.horses];
     const variance = () => 0.8 + Math.random() * 0.4;
-    const battles = FOUR_KINGS.map(king => {
-      const kingTotal = king.speed + king.power + king.stamina;
-      const playerScore = Math.round(totalStats(champion) * variance());
-      const kingScore   = Math.round(kingTotal * variance());
-      return {
-        king: king.name,
-        kingOvr: Math.round(kingTotal / 3),
-        playerScore,
-        kingScore,
-        won: playerScore >= kingScore
-      };
-    });
-    const winsCount = battles.filter(b => b.won).length;
-    game.ragnarok = { champion, count: allFighters.length, battles, winsCount };
-    const verdict = winsCount === 4 ? '全勝，惡魔之王的最強坐騎！'
-                  : winsCount >= 2  ? `${winsCount}/4 天王已倒`
-                  :                   `慘敗，僅擊倒 ${winsCount}/4`;
-    addLog(`⚡ RAGNARÖK · ${champion.name}（OVR ${ovrOf(champion)}）${verdict}`, 'soul');
+    const entries = [
+      ...playerFighters.map(h => ({
+        name: h.name, ovr: ovrOf(h),
+        skillName: h.skill ? h.skill.name : null,
+        score: Math.round(totalStats(h) * variance()),
+        isPlayer: true,
+      })),
+      ...FOUR_KINGS.map(k => {
+        const tot = k.speed + k.power + k.stamina;
+        return { name: k.name, ovr: Math.round(tot / 3), skillName: null,
+                 score: Math.round(tot * variance()), isPlayer: false };
+      }),
+    ];
+    entries.sort((a, b) => b.score - a.score);
+    game.ragnarok = { entries, totalPlayers: playerFighters.length };
+    const best = entries.find(e => e.isPlayer);
+    const rank = best ? entries.indexOf(best) + 1 : null;
+    const rankLabel = rank ? (RANK_LABELS[rank - 1] || `第 ${rank} 名`) : '無人參戰';
+    addLog(`⚡ RAGNARÖK · ${best ? best.name : '無馬'} 奪得${rankLabel}！`, 'soul');
+    render();
   }
 
   function render() {
@@ -1227,6 +1244,11 @@
     const fabBtn = document.getElementById('fab-next');
     fabBtn.disabled = btn.disabled;
     fabBtn.textContent = btn.disabled ? '終局' : '下一年';
+
+    const sweepBtn = document.getElementById('fab-sweep');
+    sweepBtn.textContent = game.sweeping ? '停止掃蕩' : '一鍵掃蕩';
+    sweepBtn.classList.toggle('sweeping', game.sweeping);
+    sweepBtn.disabled = game.yearsElapsed >= game.maxYears;
 
     const allRaceBtn = document.getElementById('all-race-btn');
     const eligibleCount = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn).length;
@@ -1381,31 +1403,32 @@
     const ragBanner = document.getElementById('ragnarok-banner');
     if (game.ragnarok) {
       ragBanner.style.display = 'block';
-      if (game.ragnarok.champion) {
-        const c = game.ragnarok.champion;
-        const { battles, winsCount, count } = game.ragnarok;
-        const battleRows = battles.map(b => `
-          <div class="rag-battle ${b.won ? 'win' : 'loss'}">
-            <span class="king-name">${b.king}</span>
-            <span class="king-ovr">OVR ${b.kingOvr}</span>
-            <span class="rag-score">[${b.playerScore} vs ${b.kingScore}]</span>
-            <span class="rag-verdict">${b.won ? '勝' : '敗'}</span>
-          </div>`).join('');
-        const finalLine = winsCount === 4
-          ? `全勝 · 惡魔之王的最強坐騎！`
-          : `${winsCount} / 4 天王已倒`;
-        ragBanner.innerHTML = `
-          <div class="ragnarok-title">⚡ RAGNARÖK</div>
-          <div class="ragnarok-champion">冠軍 · ${c.name}（OVR ${ovrOf(c)}）${c.skill ? ` · ${c.skill.name}` : ''}</div>
-          <div class="ragnarok-battles">${battleRows}</div>
-          <div class="ragnarok-sub">${count} 匹靈魂與現役參戰 · ${finalLine}</div>
-        `;
-      } else {
-        ragBanner.innerHTML = `
-          <div class="ragnarok-title">⚡ RAGNARÖK</div>
-          <div class="ragnarok-sub">無人迎戰，終局之戰未能舉行。</div>
-        `;
-      }
+      const { entries, totalPlayers } = game.ragnarok;
+      const best = entries.find(e => e.isPlayer);
+      const rank = best ? entries.indexOf(best) + 1 : null;
+      const rankLabel = rank ? (RANK_LABELS[rank - 1] || `第 ${rank} 名`) : '無人參戰';
+      const rows = entries.map((e, i) => {
+        const rl = RANK_LABELS[i] || `${i + 1}`;
+        return `<div class="rag-rank-row${e.isPlayer ? ' player' : ''}" style="animation-delay:${i * 0.1}s">
+          <span class="rag-rank-num">${rl}</span>
+          <span class="rag-rank-name">${e.name}${e.skillName ? ` ·${e.skillName}` : ''}</span>
+          <span class="rag-rank-ovr">OVR ${e.ovr}</span>
+          <span class="rag-rank-score">[${e.score}]</span>
+        </div>`;
+      }).join('');
+      ragBanner.innerHTML = `
+        <div class="ragnarok-title">⚡ RAGNARÖK</div>
+        <div class="ragnarok-champion">${best ? `${rankLabel} · ${best.name}（OVR ${best.ovr}）` : '無人參戰'}</div>
+        <div class="ragnarok-battles">${rows}</div>
+        <div class="ragnarok-sub">${totalPlayers} 匹靈魂與現役 · 挑戰四天王</div>
+      `;
+    } else if (game.yearsElapsed >= game.maxYears) {
+      ragBanner.style.display = 'block';
+      ragBanner.innerHTML = `
+        <div class="ragnarok-title">⚡ RAGNARÖK</div>
+        <div class="ragnarok-sub">三萬年已終，是時候決一死戰。</div>
+        <button class="primary" id="enter-ragnarok-btn" style="margin-top:18px;letter-spacing:.2em">進入終局</button>
+      `;
     } else {
       ragBanner.style.display = 'none';
     }
@@ -1420,7 +1443,7 @@
     const eligible = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn);
     if (game.currentTurnMajor) {
       const slots = Math.max(0, 2 - game.horses.filter(h => h.racedThisTurn).length);
-      eligible.slice(0, slots).forEach(h => runRace(h.id));
+      eligible.sort((a, b) => ovrOf(b) - ovrOf(a)).slice(0, slots).forEach(h => runRace(h.id));
     } else {
       eligible.forEach(h => runRace(h.id));
     }
@@ -1456,6 +1479,22 @@
     breed(fatherSel.value, motherSel.value);
   });
   document.getElementById('breed-all-btn').addEventListener('click', breedAll);
+
+  document.getElementById('ragnarok-banner').addEventListener('click', (e) => {
+    if (e.target.id === 'enter-ragnarok-btn') triggerRagnarok();
+  });
+
+  document.getElementById('fab-sweep').addEventListener('click', () => {
+    clearTimeout(sweepTimer);
+    game.sweeping = !game.sweeping;
+    const btn = document.getElementById('fab-sweep');
+    btn.textContent = game.sweeping ? '停止掃蕩' : '一鍵掃蕩';
+    btn.classList.toggle('sweeping', game.sweeping);
+    if (game.sweeping && !game.currentTurnMajor && game.yearsElapsed < game.maxYears) {
+      sweepTimer = setTimeout(nextTurn, 700);
+    }
+  });
+
   init();
 </script>
 </body>
