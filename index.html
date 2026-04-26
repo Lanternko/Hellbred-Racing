@@ -563,6 +563,87 @@
     box-shadow: var(--raise-sm);
   }
 
+  /* 千年大典橫幅 */
+  .major-event-banner {
+    padding: 10px 18px;
+    background: rgba(249,194,43,.1);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .race-entry.major { border-left-color: var(--c-5); }
+
+  /* 技能徽章 */
+  .skill-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    background: rgba(139,155,180,.2);
+    color: var(--c-5);
+    border: 1px solid var(--c-5);
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* 靈魂區 */
+  .soul-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .soul-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    background: rgba(46,34,47,.5);
+    border: 1px solid var(--c-2);
+    border-left: 3px solid var(--c-5);
+    border-radius: 4px;
+    opacity: 0.75;
+  }
+  .soul-ovr {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--c-5);
+    line-height: 1;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .soul-name { font-size: 15px; font-weight: 700; color: var(--text-dim); }
+  .soul-champion { border-left-color: var(--gold); opacity: 1; background: rgba(249,194,43,.08); }
+  .soul-champion .soul-name { color: var(--gold); }
+  .soul-champion .soul-ovr  { color: var(--gold); }
+
+  /* Ragnarök 終局 */
+  .ragnarok-banner {
+    margin-top: 20px;
+    padding: 22px;
+    background: rgba(173,47,69,.15);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    text-align: center;
+  }
+  .ragnarok-title {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    color: var(--accent);
+    letter-spacing: 0.3em;
+    text-shadow: 2px 2px 0 rgba(0,0,0,.6);
+    margin-bottom: 10px;
+  }
+  .ragnarok-champion {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+  .ragnarok-sub { font-size: 12px; color: var(--text-dim); letter-spacing: 0.15em; }
+  .log-entry.soul { color: var(--c-5); }
+
   /* 行動版 (≤600px)：放大字級避免手機讀不到 */
   @media (max-width: 600px) {
     body { padding: 18px 14px; font-size: 16px; }
@@ -599,6 +680,12 @@
 
     .log { font-size: 14px; padding: 12px 14px; }
     .all-race-btn { font-size: 12px; padding: 8px 12px 10px; }
+    .major-event-banner { font-size: 12px; letter-spacing: 0.15em; padding: 8px 14px; }
+    .soul-card { padding: 8px 12px; }
+    .soul-name { font-size: 14px; }
+    .soul-ovr { font-size: 16px; }
+    .ragnarok-title { font-size: 22px; }
+    .ragnarok-champion { font-size: 17px; }
   }
 </style>
 </head>
@@ -622,6 +709,7 @@
     <button class="primary" id="next-turn">下一個千年</button>
   </div>
 
+  <div id="major-event-banner" class="major-event-banner" style="display:none">⚡ 千年大典 · 賽事獎金加倍、勝者獲賜技能</div>
   <div class="section-title">賽事播報</div>
   <div class="race-feed" id="race-feed"></div>
 
@@ -630,6 +718,9 @@
     <button class="all-race-btn" id="all-race-btn" disabled>全員出戰</button>
   </div>
   <div class="horse-list" id="horse-list"></div>
+
+  <div class="section-title">靈魂區</div>
+  <div id="soul-list" class="soul-list"></div>
 
   <div class="section-title">交配所</div>
   <div class="breeding-panel">
@@ -647,6 +738,7 @@
   <div class="market-list" id="market-list"></div>
 
   <div class="log" id="log"></div>
+  <div id="ragnarok-banner" class="ragnarok-banner" style="display:none"></div>
 </div>
 
 <script>
@@ -703,7 +795,8 @@
       stamina: clamp(randInt(30, 70), 1, 100),
       status: statusFromAge(a),
       racedThisTurn: false,
-      bredThisTurn: false
+      bredThisTurn: false,
+      skill: null
     };
   }
 
@@ -737,11 +830,17 @@
       status: STATE_RETIRED,
       racedThisTurn: false,
       bredThisTurn: false,
-      price: Math.round(total * total / 70) + randInt(50, 150)
+      price: Math.round(total * total / 70) + randInt(50, 150),
+      skill: null
     };
   }
 
   const STAT_LABEL = { speed: '速度', power: '力量', stamina: '體力' };
+  const SKILL_LIST = [
+    { name: '疾風', stat: 'speed',   bonus: 15 },
+    { name: '霸力', stat: 'power',   bonus: 15 },
+    { name: '鋼魂', stat: 'stamina', bonus: 15 },
+  ];
   const MUTATION_RATE = 0.10;
   const DEGENERATION_RATE = 0.05;
   const POPULATION_MEAN = 50;
@@ -756,10 +855,13 @@
     yearPerTurn: 1000,
     money: 1000,
     horses: [],
+    souls: [],
     market: [],
     races: [],
     log: [],
-    stableExpanded: false
+    stableExpanded: false,
+    currentTurnMajor: false,
+    ragnarok: null
   };
 
   function init() {
@@ -777,27 +879,34 @@
     if (game.yearsElapsed >= game.maxYears) return;
     game.yearsElapsed += game.yearPerTurn;
 
+    const currentTurn = game.yearsElapsed / game.yearPerTurn;
+    game.currentTurnMajor = currentTurn % 5 === 0;
+
     for (const h of game.horses) {
       h.age += 1;
       h.status = statusFromAge(h.age);
       h.racedThisTurn = false;
       h.bredThisTurn = false;
     }
-    const dead = [];
+    const ascending = [];
     for (let i = game.horses.length - 1; i >= 0; i--) {
       if (game.horses[i].age >= 5) {
-        dead.push(game.horses.splice(i, 1)[0]);
+        ascending.push(game.horses.splice(i, 1)[0]);
       }
+    }
+    if (ascending.length) {
+      game.souls.push(...ascending);
+      addLog(`升入靈魂區：${ascending.map(h => h.name).join('、')}`, 'soul');
     }
 
     game.market = Array.from({ length: 4 }, makeMarketHorse);
 
-    addLog(`紀年 ${game.yearsElapsed.toLocaleString()} · 千年流逝。`);
-    if (dead.length) {
-      addLog(`離世：${dead.map(h => h.name).join('、')}（5 歲）`, 'death');
-    }
+    const majorTag = game.currentTurnMajor ? '〔千年大典〕 ' : '';
+    addLog(`${majorTag}紀年 ${game.yearsElapsed.toLocaleString()} · 千年流逝。`);
+
     if (game.yearsElapsed >= game.maxYears) {
       addLog(`時辰已盡 · 30 個千年皆已過去。`);
+      triggerRagnarok();
     }
     render();
   }
@@ -853,7 +962,8 @@
       status: STATE_FOAL,
       racedThisTurn: false,
       bredThisTurn: false,
-      mutated
+      mutated,
+      skill: null
     };
     game.horses.push(child);
     mother.bredThisTurn = true;
@@ -867,27 +977,40 @@
     const h = game.horses.find(x => x.id === horseId);
     if (!h || h.status !== STATE_PEAK || h.racedThisTurn) return;
 
+    const isMajor = game.currentTurnMajor;
     const enemy = makeEnemy();
     const variance = () => 0.8 + Math.random() * 0.4;
-    const playerScore = totalStats(h) * variance();
+    const skillBonus = h.skill ? h.skill.bonus : 0;
+    const playerScore = (totalStats(h) + skillBonus) * variance();
     const enemyScore = totalStats(enemy) * variance();
 
     const won = playerScore >= enemyScore;
-    const reward = won ? 500 : 100;
+    const reward = won ? (isMajor ? 1500 : 500) : (isMajor ? 200 : 100);
     game.money += reward;
     h.racedThisTurn = true;
+
+    let newSkill = null;
+    if (won && isMajor && !h.skill) {
+      const bestStat = ['speed', 'power', 'stamina'].reduce((a, b) => h[a] > h[b] ? a : b);
+      newSkill = SKILL_LIST.find(s => s.stat === bestStat) || SKILL_LIST[0];
+      h.skill = newSkill;
+    }
 
     game.races.unshift({
       year: game.yearsElapsed,
       player: { name: h.name, total: totalStats(h), score: Math.round(playerScore) },
       enemy: { name: enemy.name, total: totalStats(enemy), score: Math.round(enemyScore) },
       won,
-      reward
+      reward,
+      isMajor,
+      skillEarned: newSkill ? newSkill.name : null
     });
     if (game.races.length > 5) game.races.length = 5;
 
+    const majorTag = isMajor ? '〔千年大典〕 ' : '';
+    const skillTag = newSkill ? ` 獲得技能：${newSkill.name}` : '';
     addLog(
-      `賽事 · ${h.name} ${won ? '擊敗' : '不敵'} ${enemy.name}（+${reward}G）`,
+      `${majorTag}賽事 · ${h.name} ${won ? '擊敗' : '不敵'} ${enemy.name}（+${reward}G）${skillTag}`,
       won ? '' : 'death'
     );
     render();
@@ -896,6 +1019,16 @@
   function addLog(text, kind = '') {
     game.log.unshift({ text, kind });
     if (game.log.length > 30) game.log.length = 30;
+  }
+
+  function triggerRagnarok() {
+    if (!game.souls.length) {
+      game.ragnarok = { champion: null, count: 0 };
+      return;
+    }
+    const sorted = [...game.souls].sort((a, b) => ovrOf(b) - ovrOf(a));
+    game.ragnarok = { champion: sorted[0], count: sorted.length };
+    addLog(`⚡ RAGNARÖK · 冠軍：${sorted[0].name}（OVR ${ovrOf(sorted[0])}）`, 'soul');
   }
 
   function render() {
@@ -915,13 +1048,16 @@
     allRaceBtn.disabled = eligibleCount === 0 || game.yearsElapsed >= game.maxYears;
     allRaceBtn.textContent = eligibleCount > 0 ? `全員出戰 (${eligibleCount})` : '全員出戰';
 
+    document.getElementById('major-event-banner').style.display =
+      game.currentTurnMajor ? 'block' : 'none';
+
     const feed = document.getElementById('race-feed');
     if (!game.races.length) {
       feed.innerHTML = `<div class="race-empty">尚未開戰，遣巔峰馬出戰即可賺取黃金。</div>`;
     } else {
       feed.innerHTML = game.races.map(r => `
-        <div class="race-entry ${r.won ? 'win' : 'loss'}">
-          <span class="race-year">紀年 ${r.year.toLocaleString()}</span>
+        <div class="race-entry ${r.won ? 'win' : 'loss'}${r.isMajor ? ' major' : ''}">
+          <span class="race-year">${r.isMajor ? '⚡ ' : ''}紀年 ${r.year.toLocaleString()}</span>
           <span class="race-matchup">
             <span class="player">${r.player.name}</span><span class="score">[${r.player.score}]</span>
             <span class="vs">VS</span>
@@ -1006,6 +1142,7 @@
             </div>
             <div class="horse-meta">
               <span class="ovr">OVR ${ovrOf(h)}</span>
+              ${h.skill ? `<span class="skill-badge">${h.skill.name}</span>` : ''}
               <span class="age">${h.age} 歲</span>
               <span class="status ${h.status}">${STATE_LABEL[h.status]}</span>
             </div>
@@ -1021,10 +1158,50 @@
       list.innerHTML = cards + toggle;
     }
 
+    const soulListEl = document.getElementById('soul-list');
+    if (!game.souls.length) {
+      soulListEl.innerHTML = `<div class="empty">靈魂區空無一物。</div>`;
+    } else {
+      const champId = game.ragnarok && game.ragnarok.champion ? game.ragnarok.champion.id : null;
+      const sortedSouls = [...game.souls].sort((a, b) => ovrOf(b) - ovrOf(a));
+      soulListEl.innerHTML = sortedSouls.map(s => `
+        <div class="soul-card ${s.id === champId ? 'soul-champion' : ''}">
+          <div class="horse-info">
+            <div class="horse-name-row">
+              <span class="soul-name">${s.name}</span>
+              <span class="gender ${s.gender}">${s.gender === 'male' ? '公' : '母'}</span>
+              ${s.skill ? `<span class="skill-badge">${s.skill.name}</span>` : ''}
+            </div>
+          </div>
+          <span class="soul-ovr">OVR ${ovrOf(s)}</span>
+        </div>
+      `).join('');
+    }
+
     const logEl = document.getElementById('log');
     logEl.innerHTML = game.log
       .map(l => `<div class="log-entry ${l.kind}">› ${l.text}</div>`)
       .join('');
+
+    const ragBanner = document.getElementById('ragnarok-banner');
+    if (game.ragnarok) {
+      ragBanner.style.display = 'block';
+      if (game.ragnarok.champion) {
+        const c = game.ragnarok.champion;
+        ragBanner.innerHTML = `
+          <div class="ragnarok-title">⚡ RAGNARÖK</div>
+          <div class="ragnarok-champion">冠軍 · ${c.name}（OVR ${ovrOf(c)}）${c.skill ? ` · ${c.skill.name}` : ''}</div>
+          <div class="ragnarok-sub">${game.ragnarok.count} 匹靈魂參戰 · 最強者稱王</div>
+        `;
+      } else {
+        ragBanner.innerHTML = `
+          <div class="ragnarok-title">⚡ RAGNARÖK</div>
+          <div class="ragnarok-sub">靈魂區空無一物，終局之戰未能舉行。</div>
+        `;
+      }
+    } else {
+      ragBanner.style.display = 'none';
+    }
   }
 
   document.getElementById('next-turn').addEventListener('click', nextTurn);
