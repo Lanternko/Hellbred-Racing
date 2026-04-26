@@ -701,6 +701,38 @@
   .stat-pill.boosted { color: var(--gold); }
   .stat-pill.boosted strong { color: var(--gold); }
 
+  /* 右下角浮動按鈕 */
+  .fab-next {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 150;
+    padding: 14px 22px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid var(--c-9);
+    border-radius: 4px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    box-shadow: var(--raise), 0 4px 16px rgba(0,0,0,.55);
+    transition: background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap);
+  }
+  .fab-next:hover:not(:disabled) { background: var(--accent-hover); }
+  .fab-next:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: var(--raise-sm), 0 2px 8px rgba(0,0,0,.4);
+  }
+  .fab-next:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+  }
+
   /* 行動版 (≤600px)：放大字級避免手機讀不到 */
   @media (max-width: 600px) {
     body { padding: 18px 14px; font-size: 16px; }
@@ -803,6 +835,8 @@
   <div class="log" id="log"></div>
   <div id="ragnarok-banner" class="ragnarok-banner" style="display:none"></div>
 </div>
+
+<button class="fab-next" id="fab-next">下一年</button>
 
 <script>
   const NAMES = [
@@ -1033,11 +1067,17 @@
       mutated,
       skill: null
     };
+    const parentSkills = [father.skill, mother.skill].filter(Boolean);
+    if (parentSkills.length && Math.random() < 0.5) {
+      child.skill = pick(parentSkills);
+    }
+
     game.horses.push(child);
     mother.bredThisTurn = true;
 
     const eventStr = events.length ? `〔${events.join('、')}〕` : '';
-    addLog(`交配：${father.name} × ${mother.name} → ${child.name}（${child.gender === 'male' ? '公' : '母'}） ${eventStr}`);
+    const skillInherit = child.skill ? ` 繼承技能：${child.skill.name}` : '';
+    addLog(`交配：${father.name} × ${mother.name} → ${child.name}（${child.gender === 'male' ? '公' : '母'}） ${eventStr}${skillInherit}`);
     render();
   }
 
@@ -1122,6 +1162,9 @@
     const btn = document.getElementById('next-turn');
     btn.disabled = game.yearsElapsed >= game.maxYears;
     btn.textContent = btn.disabled ? '時辰已盡' : '下一個千年';
+    const fabBtn = document.getElementById('fab-next');
+    fabBtn.disabled = btn.disabled;
+    fabBtn.textContent = btn.disabled ? '終局' : '下一年';
 
     const allRaceBtn = document.getElementById('all-race-btn');
     const eligibleCount = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn).length;
@@ -1291,6 +1334,7 @@
     }
   }
 
+  document.getElementById('fab-next').addEventListener('click', nextTurn);
   document.getElementById('soul-panel-tab').addEventListener('click', () => {
     document.getElementById('soul-panel').classList.toggle('open');
   });
