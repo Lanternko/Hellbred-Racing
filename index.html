@@ -769,6 +769,38 @@
     cursor: not-allowed;
   }
 
+  /* 靈魂區 mobile 觸發按鈕（桌機隱藏） */
+  .soul-fab {
+    display: none;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 201;
+    width: 30px;
+    height: 30px;
+    background: rgba(139,155,180,.2);
+    border: 1px solid var(--c-5);
+    border-radius: 4px;
+    color: var(--c-5);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0;
+  }
+  .soul-fab:hover { background: rgba(139,155,180,.35); }
+  /* 半透明遮罩（mobile panel 打開時） */
+  .soul-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 199;
+  }
+  .soul-backdrop.active { display: block; }
+
   /* 行動版 (≤600px)：放大字級避免手機讀不到 */
   @media (max-width: 600px) {
     body { padding: 18px 14px; font-size: 16px; }
@@ -812,10 +844,27 @@
     .soul-ovr { font-size: 16px; }
     .ragnarok-title { font-size: 22px; }
     .ragnarok-champion { font-size: 17px; }
+
+    /* Mobile soul panel: fully hidden, controlled by soul-fab */
+    .soul-panel {
+      width: min(260px, 85vw);
+      transform: translateX(-100%);
+    }
+    .soul-panel.open { transform: translateX(0); }
+    .soul-panel-tab { display: none; }
+    .soul-fab { display: flex; }
+
+    /* FAB sweep 左側要避開 soul-fab */
+    .fab-sweep { left: 50px; }
+
+    /* Compact horse card stats on narrow screens */
+    .horse-actions { flex-wrap: wrap; gap: 6px; }
+    .section-header { flex-wrap: wrap; gap: 8px; }
   }
 </style>
 </head>
 <body>
+<div id="soul-backdrop" class="soul-backdrop"></div>
 <div id="soul-panel" class="soul-panel">
   <div class="soul-panel-content">
     <div class="soul-panel-header">靈魂區</div>
@@ -823,6 +872,7 @@
   </div>
   <button class="soul-panel-tab" id="soul-panel-tab">靈魂區</button>
 </div>
+<button class="soul-fab" id="soul-fab">魂</button>
 <div class="container">
   <header>
     <h1>地獄賽馬</h1>
@@ -1491,9 +1541,15 @@
   }
 
   document.getElementById('fab-next').addEventListener('click', nextTurn);
-  document.getElementById('soul-panel-tab').addEventListener('click', () => {
-    document.getElementById('soul-panel').classList.toggle('open');
-  });
+  function toggleSoulPanel() {
+    const panel = document.getElementById('soul-panel');
+    const backdrop = document.getElementById('soul-backdrop');
+    const isOpen = panel.classList.toggle('open');
+    backdrop.classList.toggle('active', isOpen);
+  }
+  document.getElementById('soul-panel-tab').addEventListener('click', toggleSoulPanel);
+  document.getElementById('soul-fab').addEventListener('click', toggleSoulPanel);
+  document.getElementById('soul-backdrop').addEventListener('click', toggleSoulPanel);
   document.getElementById('next-turn').addEventListener('click', nextTurn);
   document.getElementById('all-race-btn').addEventListener('click', () => {
     const eligible = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn);
