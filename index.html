@@ -644,6 +644,30 @@
     margin-bottom: 6px;
   }
   .ragnarok-sub { font-size: 12px; color: var(--text-dim); letter-spacing: 0.15em; }
+  .ragnarok-battles {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 12px auto 4px;
+    max-width: 480px;
+  }
+  .rag-battle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 14px;
+    border-radius: 2px;
+    background: rgba(0,0,0,.2);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+  }
+  .rag-battle .king-name { color: var(--text-dim); }
+  .rag-battle .king-ovr  { color: var(--text-dim); font-size: 13px; }
+  .rag-battle .rag-score { font-size: 13px; color: var(--text-dim); }
+  .rag-battle.win .king-name { color: var(--text); }
+  .rag-battle.win .rag-verdict { color: var(--peak); font-weight: 700; }
+  .rag-battle.loss .rag-verdict { color: var(--accent-hover); font-weight: 700; }
   .log-entry.soul { color: var(--c-5); }
 
   /* 靈魂側欄 */
@@ -829,7 +853,10 @@
     <button class="breed-btn" id="breed-all-btn" disabled>全員交配</button>
   </div>
 
-  <div class="section-title">黑市</div>
+  <div class="section-header">
+    <div class="section-title">黑市</div>
+    <button class="buy-btn" id="buy-all-market-btn" disabled>全部買入</button>
+  </div>
   <div class="market-list" id="market-list"></div>
 
   <div class="log" id="log"></div>
@@ -938,6 +965,12 @@
   }
 
   const STAT_LABEL = { speed: '速度', power: '力量', stamina: '體力' };
+  const FOUR_KINGS = [
+    { name: '炎獄王',   speed: 85, power: 65, stamina: 70 }, // OVR 73
+    { name: '冥府王',   speed: 65, power: 88, stamina: 70 }, // OVR 74
+    { name: '血戰王',   speed: 70, power: 75, stamina: 90 }, // OVR 78
+    { name: '千年魔王', speed: 90, power: 90, stamina: 90 }, // OVR 90
+  ];
   const SKILL_LIST = [
     { name: '疾風', stat: 'speed',   bonus: 15 },
     { name: '霸力', stat: 'power',   bonus: 15 },
@@ -1132,6 +1165,17 @@
     if (game.log.length > 30) game.log.length = 30;
   }
 
+  function buyAllMarket() {
+    // Buy all females (buyMarketHorse handles affordability)
+    game.market.filter(m => m.gender === 'female').forEach(m => buyMarketHorse(m.id));
+    // Buy strongest affordable male
+    const bestMale = [...game.market]
+      .filter(m => m.gender === 'male')
+      .sort((a, b) => ovrOf(b) - ovrOf(a))
+      .find(m => game.money >= m.price);
+    if (bestMale) buyMarketHorse(bestMale.id);
+  }
+
   function breedAll() {
     const retiredMales = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'male');
     if (!retiredMales.length) return;
@@ -1142,13 +1186,31 @@
   }
 
   function triggerRagnarok() {
-    if (!game.souls.length) {
-      game.ragnarok = { champion: null, count: 0 };
+    const allFighters = [...game.souls, ...game.horses];
+    if (!allFighters.length) {
+      game.ragnarok = { champion: null, count: 0, battles: [], winsCount: 0 };
       return;
     }
-    const sorted = [...game.souls].sort((a, b) => ovrOf(b) - ovrOf(a));
-    game.ragnarok = { champion: sorted[0], count: sorted.length };
-    addLog(`⚡ RAGNARÖK · 冠軍：${sorted[0].name}（OVR ${ovrOf(sorted[0])}）`, 'soul');
+    const champion = allFighters.reduce((a, b) => ovrOf(a) >= ovrOf(b) ? a : b);
+    const variance = () => 0.8 + Math.random() * 0.4;
+    const battles = FOUR_KINGS.map(king => {
+      const kingTotal = king.speed + king.power + king.stamina;
+      const playerScore = Math.round(totalStats(champion) * variance());
+      const kingScore   = Math.round(kingTotal * variance());
+      return {
+        king: king.name,
+        kingOvr: Math.round(kingTotal / 3),
+        playerScore,
+        kingScore,
+        won: playerScore >= kingScore
+      };
+    });
+    const winsCount = battles.filter(b => b.won).length;
+    game.ragnarok = { champion, count: allFighters.length, battles, winsCount };
+    const verdict = winsCount === 4 ? '全勝，惡魔之王的最強坐騎！'
+                  : winsCount >= 2  ? `${winsCount}/4 天王已倒`
+                  :                   `慘敗，僅擊倒 ${winsCount}/4`;
+    addLog(`⚡ RAGNARÖK · ${champion.name}（OVR ${ovrOf(champion)}）${verdict}`, 'soul');
   }
 
   function render() {
@@ -1213,6 +1275,9 @@
     motherSel.disabled = !females.length;
     breedBtnEl.disabled = !(fatherSel.value && motherSel.value);
     document.getElementById('breed-all-btn').disabled = !males.length || !females.length;
+
+    const buyAllBtn = document.getElementById('buy-all-market-btn');
+    buyAllBtn.disabled = !game.market.some(m => game.money >= m.price);
 
     const marketList = document.getElementById('market-list');
     if (!game.market.length) {
@@ -1318,15 +1383,27 @@
       ragBanner.style.display = 'block';
       if (game.ragnarok.champion) {
         const c = game.ragnarok.champion;
+        const { battles, winsCount, count } = game.ragnarok;
+        const battleRows = battles.map(b => `
+          <div class="rag-battle ${b.won ? 'win' : 'loss'}">
+            <span class="king-name">${b.king}</span>
+            <span class="king-ovr">OVR ${b.kingOvr}</span>
+            <span class="rag-score">[${b.playerScore} vs ${b.kingScore}]</span>
+            <span class="rag-verdict">${b.won ? '勝' : '敗'}</span>
+          </div>`).join('');
+        const finalLine = winsCount === 4
+          ? `全勝 · 惡魔之王的最強坐騎！`
+          : `${winsCount} / 4 天王已倒`;
         ragBanner.innerHTML = `
           <div class="ragnarok-title">⚡ RAGNARÖK</div>
           <div class="ragnarok-champion">冠軍 · ${c.name}（OVR ${ovrOf(c)}）${c.skill ? ` · ${c.skill.name}` : ''}</div>
-          <div class="ragnarok-sub">${game.ragnarok.count} 匹靈魂參戰 · 最強者稱王</div>
+          <div class="ragnarok-battles">${battleRows}</div>
+          <div class="ragnarok-sub">${count} 匹靈魂與現役參戰 · ${finalLine}</div>
         `;
       } else {
         ragBanner.innerHTML = `
           <div class="ragnarok-title">⚡ RAGNARÖK</div>
-          <div class="ragnarok-sub">靈魂區空無一物，終局之戰未能舉行。</div>
+          <div class="ragnarok-sub">無人迎戰，終局之戰未能舉行。</div>
         `;
       }
     } else {
@@ -1360,6 +1437,7 @@
       render();
     }
   });
+  document.getElementById('buy-all-market-btn').addEventListener('click', buyAllMarket);
   document.getElementById('market-list').addEventListener('click', (e) => {
     const btn = e.target.closest('.buy-btn');
     if (!btn || btn.disabled) return;
