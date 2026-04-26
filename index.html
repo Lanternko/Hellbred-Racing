@@ -263,6 +263,107 @@
   .log-entry { padding: 1px 0; }
   .log-entry.death { color: var(--accent-hover); }
 
+  .info-toggle-wrap {
+    margin: 22px 0 18px;
+  }
+  .info-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: rgba(0,0,0,.18);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    box-shadow: var(--raise-sm), var(--drop);
+    transition: border-color 0.12s var(--ease-snap),
+                background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap);
+  }
+  .info-toggle:hover {
+    border-color: var(--text-dim);
+    background: rgba(0,0,0,.28);
+  }
+  .info-toggle:active {
+    transform: translateY(2px);
+    box-shadow: var(--raise-sm);
+  }
+  .info-toggle.open {
+    border-color: var(--c-5);
+    background: rgba(139,155,180,.12);
+  }
+  .info-toggle-icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.22);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 6px;
+  }
+  .info-toggle-icon span {
+    border: 2px solid rgba(255,255,255,.85);
+    border-radius: 2px;
+  }
+  .info-toggle-copy {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .info-toggle-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    color: var(--text-dim);
+  }
+  .info-toggle-sub {
+    font-size: 12px;
+    color: var(--text);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .info-toggle-state {
+    font-size: 11px;
+    color: var(--c-5);
+    letter-spacing: 0.25em;
+    white-space: nowrap;
+  }
+  .info-drawer {
+    display: none;
+    margin-bottom: 24px;
+    padding: 18px;
+    background: rgba(62,53,70,.45);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: var(--raise-sm), var(--drop);
+  }
+  .info-drawer.open {
+    display: block;
+    animation: info-drawer-open 0.18s ease;
+  }
+  @keyframes info-drawer-open {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .info-drawer-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .info-drawer .log {
+    margin-top: 0;
+  }
+
   /* 賽事播報 */
   .race-feed {
     display: flex;
@@ -931,7 +1032,7 @@
   .stat-pill.boosted strong { color: var(--gold); }
 
   /* 浮動按鈕（共用基底） */
-  .fab-next, .fab-sweep {
+  .fab-next, .fab-omni {
     position: fixed;
     z-index: 150;
     min-width: 124px;
@@ -952,18 +1053,20 @@
   }
   .fab-next { bottom: 24px; right: 24px; opacity: 1; pointer-events: auto; transition: background 0.12s var(--ease-snap), transform 0.08s var(--ease-snap), opacity 0.2s ease; }
   .fab-next.hidden { opacity: 0; pointer-events: none; }
-  .fab-sweep { bottom: 80px; right: 24px; background: var(--c-2); border-color: var(--c-2); }
-  .fab-sweep.sweeping { background: var(--c-12); border-color: var(--c-12); }
-  .fab-next:hover:not(:disabled),
-  .fab-sweep:hover:not(:disabled) { background: var(--accent-hover); }
-  .fab-sweep:hover:not(:disabled) { background: var(--c-3); }
-  .fab-sweep.sweeping:hover:not(:disabled) { background: var(--c-12); filter: brightness(1.15); }
+  .fab-omni { bottom: 80px; right: 24px; background: var(--c-2); border-color: var(--c-2); color: var(--text-dim); }
+  .fab-omni.state-race  { background: var(--gold); border-color: var(--c-11); color: var(--c-0); }
+  .fab-omni.state-buy   { background: var(--c-9); border-color: var(--c-9); color: #fff; }
+  .fab-omni.state-breed { background: var(--c-7); border-color: var(--c-7); color: var(--c-0); }
+  .fab-omni.state-idle  { background: var(--c-2); border-color: var(--c-2); color: var(--text-dim); }
+  .fab-next:hover:not(:disabled) { background: var(--accent-hover); }
+  .fab-omni:hover:not(:disabled) { filter: brightness(1.08); }
   .fab-next:active:not(:disabled),
-  .fab-sweep:active:not(:disabled) {
+  .fab-omni:active:not(:disabled) {
     transform: translateY(2px);
     box-shadow: var(--raise-sm), 0 2px 8px rgba(0,0,0,.4);
   }
-  .fab-next:disabled {
+  .fab-next:disabled,
+  .fab-omni:disabled {
     background: var(--c-2);
     border-color: var(--c-2);
     color: var(--text-dim);
@@ -1038,6 +1141,12 @@
     .breed-card-stats { font-size: 10px; }
     .breed-card-ovr { font-size: 14px; }
     .breed-btn { font-size: 13px; padding: 12px 16px 14px; }
+    .info-toggle { padding: 11px 12px; gap: 10px; }
+    .info-toggle-icon { width: 28px; height: 28px; min-width: 28px; padding: 5px; gap: 3px; }
+    .info-toggle-title { font-size: 11px; letter-spacing: 0.2em; }
+    .info-toggle-sub { font-size: 11px; }
+    .info-toggle-state { font-size: 10px; letter-spacing: 0.15em; }
+    .info-drawer { padding: 14px; }
 
     .race-entry { padding: 10px 14px; gap: 10px; font-size: 14px; }
     .race-matchup { font-size: 15px; }
@@ -1078,7 +1187,7 @@
       backdrop-filter: blur(10px);
     }
     .fab-next,
-    .fab-sweep {
+    .fab-omni {
       position: static;
       min-width: 0;
       width: 100%;
@@ -1127,8 +1236,6 @@
   </div>
 
   <div id="major-event-banner" class="major-event-banner" style="display:none">⚡ 千年大典 · 賽事獎金加倍、勝者獲賜技能</div>
-  <div class="section-title">賽事播報</div>
-  <div class="race-feed" id="race-feed"></div>
 
   <div class="section-header">
     <div class="section-title">馬廄</div>
@@ -1136,38 +1243,66 @@
   </div>
   <div class="horse-list" id="horse-list"></div>
 
-  <div class="section-title">交配所</div>
-  <div class="breeding-panel" id="breeding-panel">
-    <div class="breed-grid">
+  <div class="info-toggle-wrap">
+    <button class="info-toggle" id="info-toggle" aria-expanded="false" aria-controls="info-drawer">
+      <span class="info-toggle-icon" aria-hidden="true"><span></span><span></span></span>
+      <span class="info-toggle-copy">
+        <span class="info-toggle-title">資訊欄</span>
+        <span class="info-toggle-sub" id="info-toggle-sub">播報 0 · 黑市 0 · 交配 0 · 紀錄 0</span>
+      </span>
+      <span class="info-toggle-state" id="info-toggle-state">展開</span>
+    </button>
+  </div>
+
+  <div class="info-drawer" id="info-drawer">
+    <div class="info-drawer-stack">
       <div>
-        <div class="breed-col-title">公 馬</div>
-        <div class="breed-list" id="breed-male-list"></div>
+        <div class="section-title">賽事播報</div>
+        <div class="race-feed" id="race-feed"></div>
       </div>
+
       <div>
-        <div class="breed-col-title">母 馬</div>
-        <div class="breed-list" id="breed-female-list"></div>
+        <div class="section-title">交配所</div>
+        <div class="breeding-panel" id="breeding-panel">
+          <div class="breed-grid">
+            <div>
+              <div class="breed-col-title">公 馬</div>
+              <div class="breed-list" id="breed-male-list"></div>
+            </div>
+            <div>
+              <div class="breed-col-title">母 馬</div>
+              <div class="breed-list" id="breed-female-list"></div>
+            </div>
+          </div>
+          <div class="breed-pair-display" id="breed-pair-display"></div>
+          <div id="vet-advice-block" class="vet-advice" style="display:none"></div>
+          <div class="breed-actions">
+            <button class="breed-btn" id="breed-btn" disabled>交配</button>
+            <button class="breed-btn" id="breed-all-btn" disabled>智能交配</button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="breed-pair-display" id="breed-pair-display"></div>
-    <div id="vet-advice-block" class="vet-advice" style="display:none"></div>
-    <div class="breed-actions">
-      <button class="breed-btn" id="breed-btn" disabled>交配</button>
-      <button class="breed-btn" id="breed-all-btn" disabled>一鍵交配</button>
+
+      <div>
+        <div class="section-header">
+          <div class="section-title">黑市</div>
+          <button class="buy-btn" id="buy-all-market-btn" disabled>全體購買</button>
+        </div>
+        <div class="market-list" id="market-list"></div>
+      </div>
+
+      <div>
+        <div class="section-title">紀錄</div>
+        <div class="log" id="log"></div>
+      </div>
     </div>
   </div>
 
-  <div class="section-header">
-    <div class="section-title">黑市</div>
-    <button class="buy-btn" id="buy-all-market-btn" disabled>一鍵買入</button>
-  </div>
-  <div class="market-list" id="market-list"></div>
-
-  <div class="log" id="log"></div>
   <div id="ragnarok-banner" class="ragnarok-banner" style="display:none"></div>
 </div>
 
 <div class="fab-actions">
-  <button class="fab-sweep" id="fab-sweep">一鍵掃蕩</button>
+  <button class="fab-omni state-race" id="fab-omni">全體出戰</button>
   <button class="fab-next" id="fab-next">下一年</button>
 </div>
 
@@ -1439,13 +1574,12 @@
     races: [],
     log: [],
     stableExpanded: false,
+    infoDrawerOpen: false,
     currentTurnMajor: false,
     ragnarok: null,
-    sweeping: false,
     breedFatherId: null,
     breedMotherId: null,
   };
-  let sweepTimer = null;
 
   function init() {
     game.horses = [
@@ -1491,13 +1625,32 @@
     addLog(`${majorTag}紀年 ${game.yearsElapsed.toLocaleString()} · 千年流逝。`);
 
     if (game.yearsElapsed >= game.maxYears) {
-      game.sweeping = false;
-      clearTimeout(sweepTimer);
       addLog(`時辰已盡 · 30 個千年皆已過去。`);
     }
     render();
-    if (game.sweeping && !game.currentTurnMajor && game.yearsElapsed < game.maxYears) {
-      sweepTimer = setTimeout(doSmartSweep, 700);
+  }
+
+  function getRaceBatch() {
+    const eligible = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn);
+    if (!game.currentTurnMajor) return eligible;
+    const racedCount = game.horses.filter(h => h.racedThisTurn).length;
+    const slots = Math.max(0, 2 - racedCount);
+    return [...eligible].sort((a, b) => ovrOf(b) - ovrOf(a)).slice(0, slots);
+  }
+
+  function getAffordableMarketCount() {
+    return game.market.filter(m => game.money >= m.price).length;
+  }
+
+  function runAllRaces() {
+    const batch = getRaceBatch();
+    if (!batch.length) return;
+    batch.forEach(h => runRace(h.id));
+    if (!game.infoDrawerOpen) {
+      game.infoDrawerOpen = true;
+      render();
+      requestAnimationFrame(() =>
+        document.getElementById('info-toggle').scrollIntoView({ behavior: 'smooth', block: 'start' }));
     }
   }
 
@@ -1636,10 +1789,62 @@
     if (game.log.length > 30) game.log.length = 30;
   }
 
+  function getBluePool(horse) {
+    if (!horse.traits) return new Set();
+    return new Set([
+      ...horse.traits.recessiveFlags,
+      ...horse.traits.displayed.filter(t => t.type === 'blue').map(t => t.id),
+    ]);
+  }
+
+  function getRedIds(horse) {
+    return horse.traits
+      ? horse.traits.displayed.filter(t => t.type === 'red').map(t => t.id)
+      : [];
+  }
+
+  function breedPairScore(father, mother) {
+    const fatherBlue = getBluePool(father);
+    const motherBlue = getBluePool(mother);
+    const sharedBlue = [...fatherBlue].filter(id => motherBlue.has(id)).length;
+
+    const fatherRed = getRedIds(father);
+    const motherRed = getRedIds(mother);
+    const sharedRed = fatherRed.filter(id => motherRed.includes(id)).length;
+    const totalRed = new Set([...fatherRed, ...motherRed]).size;
+    const statDiff = (
+      Math.abs(father.speed - mother.speed) +
+      Math.abs(father.power - mother.power) +
+      Math.abs(father.stamina - mother.stamina)
+    ) / 18;
+    const skillBonus = (father.skill ? 5 : 0) + (mother.skill ? 4 : 0);
+    return (
+      ovrOf(father) * 1.25 +
+      ovrOf(mother) +
+      sharedBlue * 12 +
+      skillBonus -
+      sharedRed * 32 -
+      totalRed * 6 -
+      statDiff
+    );
+  }
+
+  function getSmartBreedPairs() {
+    const eligibleMales = game.horses.filter(h => h.age >= 3 && h.gender === 'male');
+    const eligibleFemales = game.horses
+      .filter(h => h.age >= 3 && h.gender === 'female' && !h.bredThisTurn)
+      .sort((a, b) => ovrOf(b) - ovrOf(a));
+    if (!eligibleMales.length || !eligibleFemales.length) return [];
+    return eligibleFemales.map(mother => {
+      const father = eligibleMales.reduce((best, candidate) =>
+        breedPairScore(candidate, mother) > breedPairScore(best, mother) ? candidate : best
+      );
+      return { father, mother, score: breedPairScore(father, mother) };
+    });
+  }
+
   function buyAllMarket() {
-    // Buy all females (buyMarketHorse handles affordability)
     game.market.filter(m => m.gender === 'female').forEach(m => buyMarketHorse(m.id));
-    // Buy strongest affordable male
     const bestMale = [...game.market]
       .filter(m => m.gender === 'male')
       .sort((a, b) => ovrOf(b) - ovrOf(a))
@@ -1648,12 +1853,7 @@
   }
 
   function breedAll() {
-    const eligibleMales = game.horses.filter(h => h.age >= 3 && h.gender === 'male');
-    if (!eligibleMales.length) return;
-    const bestMale = eligibleMales.reduce((a, b) => ovrOf(a) >= ovrOf(b) ? a : b);
-    const eligibleFemales = game.horses.filter(h => h.age >= 3 && h.gender === 'female' && !h.bredThisTurn);
-    if (!eligibleFemales.length) return;
-    eligibleFemales.forEach(f => breed(bestMale.id, f.id));
+    getSmartBreedPairs().forEach(({ father, mother }) => breed(father.id, mother.id));
   }
 
   function smartBuy() {
@@ -1693,22 +1893,43 @@
     }
   }
 
-  function doSmartSweep() {
-    if (!game.sweeping || game.yearsElapsed >= game.maxYears) return;
-    // 1. 全員出戰
-    const eligible = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn);
-    if (game.currentTurnMajor) {
-      const slots = Math.max(0, 2 - game.horses.filter(h => h.racedThisTurn).length);
-      eligible.sort((a, b) => ovrOf(b) - ovrOf(a)).slice(0, slots).forEach(h => runRace(h.id));
-    } else {
-      eligible.forEach(h => runRace(h.id));
+  function getOmniAction() {
+    if (game.yearsElapsed >= game.maxYears) {
+      return { key: 'idle', label: '終局', disabled: true };
     }
-    // 2. 智慧買入
-    smartBuy();
-    // 3. 一鍵交配
-    breedAll();
-    // 4. 下一年
-    nextTurn();
+    const raceBatch = getRaceBatch();
+    if (raceBatch.length) {
+      return {
+        key: 'race',
+        label: game.currentTurnMajor ? `大典出戰 (${raceBatch.length})` : `全體出戰 (${raceBatch.length})`,
+        disabled: false,
+      };
+    }
+    const affordableCount = getAffordableMarketCount();
+    if (affordableCount) {
+      return { key: 'buy', label: `全體購買 (${affordableCount})`, disabled: false };
+    }
+    const breedPairs = getSmartBreedPairs();
+    if (breedPairs.length) {
+      return { key: 'breed', label: `智能交配 (${breedPairs.length})`, disabled: false };
+    }
+    return { key: 'idle', label: '待下一年', disabled: true };
+  }
+
+  function runOmniAction() {
+    const action = getOmniAction();
+    if (action.disabled) return;
+    if (action.key === 'race') {
+      runAllRaces();
+      return;
+    }
+    if (action.key === 'buy') {
+      smartBuy();
+      return;
+    }
+    if (action.key === 'breed') {
+      breedAll();
+    }
   }
 
   const RANK_LABELS = ['冠軍', '亞軍', '季軍'];
@@ -1772,10 +1993,11 @@
     fabBtn.disabled = btn.disabled;
     fabBtn.textContent = btn.disabled ? '終局' : '下一年';
 
-    const sweepBtn = document.getElementById('fab-sweep');
-    sweepBtn.textContent = game.sweeping ? '停止掃蕩' : '一鍵掃蕩';
-    sweepBtn.classList.toggle('sweeping', game.sweeping);
-    sweepBtn.disabled = game.yearsElapsed >= game.maxYears;
+    const omniAction = getOmniAction();
+    const omniBtn = document.getElementById('fab-omni');
+    omniBtn.textContent = omniAction.label;
+    omniBtn.disabled = omniAction.disabled;
+    omniBtn.className = `fab-omni state-${omniAction.key}`;
 
     const allRaceBtn = document.getElementById('all-race-btn');
     const eligibleCount = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn).length;
@@ -1789,6 +2011,16 @@
 
     document.getElementById('major-event-banner').style.display =
       game.currentTurnMajor ? 'block' : 'none';
+
+    const smartPairs = getSmartBreedPairs();
+    const infoToggle = document.getElementById('info-toggle');
+    const infoDrawer = document.getElementById('info-drawer');
+    infoToggle.classList.toggle('open', game.infoDrawerOpen);
+    infoToggle.setAttribute('aria-expanded', String(game.infoDrawerOpen));
+    infoDrawer.classList.toggle('open', game.infoDrawerOpen);
+    document.getElementById('info-toggle-state').textContent = game.infoDrawerOpen ? '收起' : '展開';
+    document.getElementById('info-toggle-sub').textContent =
+      `播報 ${game.races.length} · 黑市 ${game.market.length} · 交配 ${smartPairs.length} · 紀錄 ${game.log.length}`;
 
     const feed = document.getElementById('race-feed');
     if (!game.races.length) {
@@ -1846,6 +2078,7 @@
     breedBtnEl.disabled = !(father && mother);
     const fertileFemales = females.filter(h => !h.bredThisTurn);
     document.getElementById('breed-all-btn').disabled = !males.length || !fertileFemales.length;
+    document.getElementById('breed-all-btn').textContent = smartPairs.length ? `智能交配 (${smartPairs.length})` : '智能交配';
 
     const vetBlock = document.getElementById('vet-advice-block');
     if (father && mother) {
@@ -1858,7 +2091,9 @@
     }
 
     const buyAllBtn = document.getElementById('buy-all-market-btn');
-    buyAllBtn.disabled = !game.market.some(m => game.money >= m.price);
+    const affordableCount = getAffordableMarketCount();
+    buyAllBtn.disabled = affordableCount === 0;
+    buyAllBtn.textContent = affordableCount ? `全體購買 (${affordableCount})` : '全體購買';
 
     const marketList = document.getElementById('market-list');
     if (!game.market.length) {
@@ -2004,6 +2239,7 @@
   }
 
   document.getElementById('fab-next').addEventListener('click', nextTurn);
+  document.getElementById('fab-omni').addEventListener('click', runOmniAction);
   function toggleSoulPanel() {
     const panel = document.getElementById('soul-panel');
     const backdrop = document.getElementById('soul-backdrop');
@@ -2014,21 +2250,11 @@
   document.getElementById('soul-fab').addEventListener('click', toggleSoulPanel);
   document.getElementById('soul-backdrop').addEventListener('click', toggleSoulPanel);
   document.getElementById('next-turn').addEventListener('click', nextTurn);
-  document.getElementById('all-race-btn').addEventListener('click', () => {
-    const eligible = game.horses.filter(h => h.status === STATE_PEAK && !h.racedThisTurn);
-    if (game.currentTurnMajor) {
-      const slots = Math.max(0, 2 - game.horses.filter(h => h.racedThisTurn).length);
-      eligible.sort((a, b) => ovrOf(b) - ovrOf(a)).slice(0, slots).forEach(h => runRace(h.id));
-    } else {
-      eligible.forEach(h => runRace(h.id));
-    }
-    const males   = game.horses.filter(h => h.age >= 3 && h.gender === 'male');
-    const females = game.horses.filter(h => h.age >= 3 && h.gender === 'female' && !h.bredThisTurn);
-    if (males.length && females.length) {
-      requestAnimationFrame(() =>
-        document.getElementById('breeding-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }));
-    }
+  document.getElementById('info-toggle').addEventListener('click', () => {
+    game.infoDrawerOpen = !game.infoDrawerOpen;
+    render();
   });
+  document.getElementById('all-race-btn').addEventListener('click', runAllRaces);
   document.getElementById('horse-list').addEventListener('click', (e) => {
     const raceBtn = e.target.closest('.race-btn');
     if (raceBtn && !raceBtn.disabled) {
@@ -2041,7 +2267,7 @@
       render();
     }
   });
-  document.getElementById('buy-all-market-btn').addEventListener('click', buyAllMarket);
+  document.getElementById('buy-all-market-btn').addEventListener('click', smartBuy);
   document.getElementById('market-list').addEventListener('click', (e) => {
     const btn = e.target.closest('.buy-btn');
     if (!btn || btn.disabled) return;
@@ -2071,17 +2297,6 @@
 
   document.getElementById('ragnarok-banner').addEventListener('click', (e) => {
     if (e.target.id === 'enter-ragnarok-btn') triggerRagnarok();
-  });
-
-  document.getElementById('fab-sweep').addEventListener('click', () => {
-    clearTimeout(sweepTimer);
-    game.sweeping = !game.sweeping;
-    const btn = document.getElementById('fab-sweep');
-    btn.textContent = game.sweeping ? '停止掃蕩' : '一鍵掃蕩';
-    btn.classList.toggle('sweeping', game.sweeping);
-    if (game.sweeping && !game.currentTurnMajor && game.yearsElapsed < game.maxYears) {
-      sweepTimer = setTimeout(doSmartSweep, 700);
-    }
   });
 
   // 馬匹清單 modal
