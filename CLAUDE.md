@@ -7,6 +7,7 @@
 - **Stack**: 純 HTML + JavaScript（單檔 / 無 bundler）。Why: 零基礎 + AI 輔助開發，任何 build step 都是過早優化；Claude artifact 直接輸出單檔 HTML 最快。
 - **Layout**:
   - `index.html` — 遊戲本體（Claude artifact 產出後存於此）
+  - `names.js` — 馬匹命名系統（6 風格字庫，獨立檔以避免污染 index.html）
   - `prompts/` — 三段式交接 prompt（step-1 / 2 / 3）
   - `memory/playtest_notes.md` — 數值崩壞觀察紀錄
   - `CLAUDE.md` — 此檔（SSoT）
@@ -23,13 +24,14 @@ open index.html
 - 每次互動明說「use playwright mcp to ...」，否則 Claude 會 fallback 去讀 HTML 純文字幻想結果。樣板：「use playwright mcp to open `file://.../index.html`, screenshot, click 下一個千年, screenshot again, report what changed」。
 
 ## Current state (as of 2026-04-27)
-Stage A + B + C 已部署：https://lanternko.github.io/Hellbred-Racing/
-**Stage D**（roguelike 6-turn cycle + 印記）2026-04-27 設計定稿，實作中。
+Stage A + B + C + D 已實作。**Stage E**（替補席 + 賽事優先 + Phase Lock）2026-04-27 實作中。
+**命名系統**（`names.js`）2026-04-27 完成：6 風格（中華/美式/原民/神話/日式/機械龐克）+ 姓氏繼承強者/名字取自弱者 origin + 英文姓後置。
 
 **Stage A**：均值回歸交配 + 母馬限回合限 1 次 + OVR 排序 + 馬廄展開 + 突變紅字
-**Stage B**：靈魂區 + Ragnarök + 千年大典 + 技能（疾風/霸力/鋼魂）+ 一鍵掃蕩
+**Stage B**：靈魂區 + Ragnarök + 大典 + 技能 + 一鍵掃蕩
 **Stage C**：特性系統（藍/紅/金）+ 獸醫建言 + 馬匹清單 modal
-**Stage D**：6-turn cycle（活動×2 → 賽事 → 活動×2 → 大典）+ 馬廄 fix size + 金幣 down-scale + 印記
+**Stage D**：6-turn cycle + 馬廄 fix size + 金幣 down-scale + 印記
+**Stage E**：active/bench 分離 + 「參賽過才能交配」+ 公馬一胎/年（母馬不限）+ subPhase（整隊→賽事→育馬）+ 千年→年命名平民化
 **設計哲學**：特性決定方向，數值決定下限。資訊 B方案（部分遮蔽）— 隱性僅顯示「血統中潛藏不詳因子」。
 
 ## Stage C 規格（已實作）
@@ -73,16 +75,47 @@ Stage A + B + C 已部署：https://lanternko.github.io/Hellbred-Racing/
 
 **馬匹新欄位：** `marks: []`（max 1）, `marksRecessive: []`（隱性傳遞用）
 
+## Stage E 規格（替補席 + 賽事優先 + Phase Lock）
+
+**馬廄拆分**：
+- `game.horses` = **active roster**（先發名單），cap = `stableSize`（6 → 11）
+- `game.bench` = **替補席**，無上限
+- 替補馬可育種前提是先換上 active 並參賽過。
+
+**回合 sub-phase**（race / major turn 才走）：
+- `roster`：玩家用「下放替補 / 上場」整隊。「整隊完成」按鈕推進。
+- `racing`：點「全員出戰」→ active 全員賽完 → 自動進 breeding。
+- `breeding`：黑市 + 交配所開啟，完成後「下一年」推進。
+- 活動 turn (T1/2/4/5)：subPhase = null，只走三選一 modal → 下一年。
+
+**育種規則改動**：
+- 必須**雙親當年都已完賽**（`racedThisTurn === true`）才能交配。
+- 公馬：當年最多 1 胎（`father.bredThisTurn` block）。
+- 母馬：取消一胎限制（cap 6 自然壓制）。
+- 智能交配自動避免重用同一公馬。
+
+**新買 / 新生馬本年凍結**：購入或生出時即 `racedThisTurn = true` & `bredThisTurn = true` —
+無法當年參賽、無法當年交配，避免「買強馬立刻刷一輪」。
+
+**自動入替**：active 有空位（老化 / 玩家下放）→ `promoteFromBench()` 從 bench 高 OVR 自動補上。
+
+**UI 單一職責**：body 加 `subphase-{event|roster|racing|breeding}` / `phase-{init|end}` class，
+CSS 隱藏不相干區塊（黑市/交配/race button/swap button）。
+
+**命名平民化**：「千年 → 年」、「千年大典 → 大典」、「下一個千年 → 下一年」。
+yearsElapsed 內部仍是 1000 倍數，顯示時 `/ 1000`。
+
 ## Next actions
 - [x] Stage A/B 全部完成並部署
 - [x] **Stage C-1：特性系統** — 資料結構 + 遺傳邏輯 + UI badge + 戰力加乘（commit `864f83a`）
 - [x] **Stage C-2：獸醫建言** — 瓦拉克博士台詞庫 + 判定邏輯（commit `864f83a`）
 - [x] **Stage C-3：馬匹清單 modal** — 三 tab（commit `864f83a`）
 - [x] **特性擴充**：B07/B08/R03/R04/R06/G02 + 紅特自然生成（2026-04-27）
-- [ ] **Stage D**：6-turn cycle + 馬廄 fix size + 金幣 down-scale + 活動 modal + 印記（實作中）
-- [ ] **Stage C-4（暫緩）：世代育種資料庫** — 每回合育種進 pool，世代末選 5，需改核心 loop
-- [ ] **Playtest Run #2** — Stage D 完成後跑 1 場，觀察 6-turn 節奏 + 印記稀有度是否合理 → `memory/playtest_notes.md`
-- [ ] **TODO（解凍後）**：理財工具（金幣 sink）/ 花錢升級馬廄（與自動升級疊加）/ 印記 #3-5（鋼骨/無盡/鬼血）
+- [x] **Stage D**：6-turn cycle + 馬廄 fix size + 金幣 down-scale + 活動 modal + 印記（commit `f269baa`）
+- [ ] **Stage E**：替補席 + 賽事優先 + subPhase + 命名平民化（實作中）
+- [ ] **Stage C-4（暫緩）：世代育種資料庫**
+- [ ] **Playtest Run #2** — Stage E 完成後跑 1 場，觀察整隊→賽事→育馬節奏感 + 替補席策略價值
+- [ ] **TODO（解凍後）**：理財工具 / 花錢升級馬廄 / 印記 #3-5
 
 ## Frozen systems（MVP 期不做，違反前先停下來問本人）
 - **榮冠卡牌系統** — Why: 卡牌會與交配 / 賽事系統互相耦合，未驗證核心循環前加進去等於三系統一起重構。
