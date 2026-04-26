@@ -1352,11 +1352,13 @@
     return { ...generateHorseName(o), origin: o };
   }
 
-  const BLUE_IDS = ['B01','B02','B03','B04','B05','B06'];
+  const BLUE_IDS = ['B01','B02','B03','B04','B05','B06','B07','B08'];
+  const RED_IDS  = ['R01','R02','R03','R04','R05','R06'];
 
   function makeHorse({ age = 0 } = {}) {
     const a = Math.max(0, Math.floor(age));
     const recessiveFlags = Math.random() < 0.6 ? [pick(BLUE_IDS)] : [];
+    const displayed = Math.random() < 0.08 ? [{ id: pick(RED_IDS), type:'red' }] : [];
     const origin = randomOrigin();
     const { surname, givenName, name } = generateHorseName(origin);
     return {
@@ -1371,7 +1373,7 @@
       racedThisTurn: false,
       bredThisTurn: false,
       skill: null,
-      traits: { displayed: [], recessiveFlags },
+      traits: { displayed, recessiveFlags },
       parents: null,
     };
   }
@@ -1415,7 +1417,10 @@
       bredThisTurn: false,
       price: Math.round(total * total / 70) + randInt(50, 150),
       skill: null,
-      traits: { displayed: [], recessiveFlags: [pick(BLUE_IDS)] },
+      traits: {
+        displayed: Math.random() < 0.12 ? [{ id: pick(RED_IDS), type:'red' }] : [],
+        recessiveFlags: [pick(BLUE_IDS)],
+      },
     };
   }
 
@@ -1445,10 +1450,16 @@
     B04: { id:'B04', type:'blue', name:'鐵蹄',     desc:'爬山地形戰力 +10%' },
     B05: { id:'B05', type:'blue', name:'疾風步',   desc:'長平原地形戰力 +10%' },
     B06: { id:'B06', type:'blue', name:'起伏直覺', desc:'起伏地形戰力 +10%' },
+    B07: { id:'B07', type:'blue', name:'共鳴體質', desc:'每持有 1 個其他藍特，戰力額外 +3%' },
+    B08: { id:'B08', type:'blue', name:'多產血脈', desc:'交配時藍特繼承率提升（單親 50→80%、雙親 70→85%）' },
     R01: { id:'R01', type:'red',  name:'燃盡',     desc:'每場出賽後速度永久 -1' },
     R02: { id:'R02', type:'red',  name:'玻璃骨',   desc:'非對應賽道戰力 -20%' },
+    R03: { id:'R03', type:'red',  name:'玻璃心',   desc:'千年大典必敗，無視戰力' },
+    R04: { id:'R04', type:'red',  name:'孤傲',     desc:'參賽時自身所有特性效果失效（仍可遺傳）' },
     R05: { id:'R05', type:'red',  name:'短命血統', desc:'壽命縮短，Age 4 直接死亡' },
+    R06: { id:'R06', type:'red',  name:'暴食',     desc:'每年消耗 80G 飼料費' },
     G01: { id:'G01', type:'gold', name:'地獄之王', desc:'Ragnarök 中所有屬性視為匹配' },
+    G02: { id:'G02', type:'gold', name:'鳳凰之血', desc:'死亡時 30% 機率以幼駒姿態重生（一次性）' },
   };
 
   const RACE_TYPES = [
@@ -1470,6 +1481,8 @@
     recessiveB04: { text:'骨骼結構頗為紮實，山地血統的印記清晰可見。\n爬坡或是此子天生的舞台。', sev:'' },
     recessiveB05: { text:'四肢比例修長，有平原疾馳者的血統輪廓。\n長直賽道或能見到此子的真正速度。', sev:'' },
     recessiveB06: { text:'重心極低，對起伏地形有天然的適應傾向。\n或許能在最複雜的賽道中找到節奏。', sev:'' },
+    recessiveB07: { text:'血脈中似乎潛藏著某種「共鳴」之力。\n若子代繼承且擁有多個天賦，將彼此放大。', sev:'' },
+    recessiveB08: { text:'此血脈生機旺盛，傳承之力勝於常理。\n子代或將更完整地承繼父母的隱性天賦。', sev:'' },
     highDiff:     { text:'血統差異顯著，子代走向難以預測。\n然而，老夫見過最驚人的突破，往往來自這樣的配對。', sev:'' },
     lowDiff:      { text:'兩者血統過於相近，子代恐怕難有突破。\n突變，是唯一的希望。', sev:'' },
     normal:       { text:'這對配對血統相性尚可。\n子代應能穩定繼承雙親之長。', sev:'' },
@@ -1513,10 +1526,15 @@
       ...mother.traits.recessiveFlags,
       ...mother.traits.displayed.filter(t => t.type === 'blue').map(t => t.id),
     ]);
+    const b08Boost =
+      father.traits.displayed.some(t => t.id === 'B08') ||
+      mother.traits.displayed.some(t => t.id === 'B08');
+    const bothRate   = b08Boost ? 0.85 : 0.70;
+    const singleRate = b08Boost ? 0.80 : 0.50;
     for (const id of new Set([...fBlues, ...mBlues])) {
       if (fBlues.has(id) && mBlues.has(id)) {
-        Math.random() < 0.70 ? addD({ id, type:'blue' }) : addR(id);
-      } else if (Math.random() < 0.50) {
+        Math.random() < bothRate ? addD({ id, type:'blue' }) : addR(id);
+      } else if (Math.random() < singleRate) {
         addR(id);
       }
     }
@@ -1531,20 +1549,32 @@
       if (Math.random() < (fH && mH ? 0.85 : 0.55)) addD({ id, type:'red' });
     }
 
+    if (Math.random() < 0.03) {
+      const newRed = pick(RED_IDS);
+      if (!displayed.some(t => t.id === newRed)) addD({ id: newRed, type:'red' });
+    }
+
     const goldTriggered = Math.random() < 0.02;
-    if (goldTriggered) addD({ id:'G01', type:'gold' });
+    if (goldTriggered) {
+      addD({ id: Math.random() < 0.5 ? 'G01' : 'G02', type:'gold' });
+    }
     return { displayed, recessiveFlags, goldTriggered };
   }
 
   function applyTraitMultiplier(horse, attr, terrain) {
-    let m = 1.0;
     const d = horse.traits ? horse.traits.displayed : [];
+    if (d.some(t => t.id === 'R04')) return 1.0;
+    let m = 1.0;
     if (attr === 'Fire' && d.some(t => t.id === 'B01')) m += 0.08;
     if (attr === 'Ice'  && d.some(t => t.id === 'B02')) m += 0.08;
     if (attr === 'Sand' && d.some(t => t.id === 'B03')) m += 0.08;
     if (terrain === '爬山'     && d.some(t => t.id === 'B04')) m += 0.10;
     if (terrain === '長平原'   && d.some(t => t.id === 'B05')) m += 0.10;
     if (terrain === '起伏不定' && d.some(t => t.id === 'B06')) m += 0.10;
+    if (d.some(t => t.id === 'B07')) {
+      const otherBlue = d.filter(t => t.type === 'blue' && t.id !== 'B07').length;
+      m += 0.03 * otherBlue;
+    }
     if (d.some(t => t.id === 'R02')) {
       const matches = attr === 'Normal' ||
         (attr === 'Fire' && d.some(t => t.id === 'B01')) ||
@@ -1600,13 +1630,39 @@
       h.racedThisTurn = false;
       h.bredThisTurn = false;
     }
+    let foodCost = 0;
+    const foodEaters = [];
+    for (const h of game.horses) {
+      if (h.traits && h.traits.displayed.some(t => t.id === 'R06')) {
+        foodCost += 80;
+        foodEaters.push(h.name);
+      }
+    }
+    if (foodCost > 0) {
+      game.money = Math.max(0, game.money - foodCost);
+      addLog(`暴食特性 −${foodCost}G 飼料費（${foodEaters.join('、')}）`, 'death');
+    }
     const ascending = [];
+    const reborn = [];
     for (let i = game.horses.length - 1; i >= 0; i--) {
       const h = game.horses[i];
       const hasR05 = h.traits && h.traits.displayed.some(t => t.id === 'R05');
       if (h.age >= (hasR05 ? 4 : 5)) {
-        ascending.push(game.horses.splice(i, 1)[0]);
+        const hasG02 = h.traits && h.traits.displayed.some(t => t.id === 'G02');
+        if (hasG02 && Math.random() < 0.30) {
+          h.age = 0;
+          h.status = STATE_FOAL;
+          h.racedThisTurn = false;
+          h.bredThisTurn = false;
+          h.traits.displayed = h.traits.displayed.filter(t => t.id !== 'G02');
+          reborn.push(h.name);
+        } else {
+          ascending.push(game.horses.splice(i, 1)[0]);
+        }
       }
+    }
+    if (reborn.length) {
+      addLog(`🔥 鳳凰之血燃燒：${reborn.join('、')} 以幼駒姿態重生！`, 'soul');
     }
     if (ascending.length) {
       game.souls.push(...ascending);
@@ -1750,7 +1806,9 @@
     const playerScore = totalStats(h) * traitMult * variance();
     const enemyScore = totalStats(enemy) * variance();
 
-    const won = playerScore >= enemyScore;
+    const hasR03 = h.traits && h.traits.displayed.some(t => t.id === 'R03');
+    const r03Forced = isMajor && hasR03;
+    const won = r03Forced ? false : (playerScore >= enemyScore);
     const reward = won ? (isMajor ? 1000 : 300) : (isMajor ? 150 : 60);
     game.money += reward;
     h.racedThisTurn = true;
@@ -1783,8 +1841,9 @@
     const majorTag = isMajor ? '〔千年大典〕 ' : '';
     const skillTag = newSkill ? ` 獲得技能：${newSkill.name}` : '';
     const traitTag = traitMult !== 1 ? ` [特性×${traitMult.toFixed(2)}]` : '';
+    const r03Tag = r03Forced ? ' 💔玻璃心崩潰' : '';
     addLog(
-      `${majorTag}${raceType.name} · ${h.name} ${won ? '擊敗' : '不敵'} ${enemy.name}（+${reward}G）${skillTag}${traitTag}`,
+      `${majorTag}${raceType.name} · ${h.name} ${won ? '擊敗' : '不敵'} ${enemy.name}（+${reward}G）${skillTag}${traitTag}${r03Tag}`,
       won ? '' : 'death'
     );
     render();
@@ -2161,8 +2220,10 @@
         }).join('') : '';
         const recessiveWarn = h.traits && h.traits.recessiveFlags.length
           ? `<span class="trait-warning">⚠ 不詳因子</span>` : '';
+        const rarityId = (typeof window.rarityOf === 'function') ? window.rarityOf(h).id : '';
+        const ageDim = h.status !== STATE_PEAK ? 'dim' : '';
         return `
-          <div class="horse-card" data-id="${h.id}">
+          <div class="horse-card" data-id="${h.id}"${rarityId ? ` data-rarity="${rarityId}"` : ''}>
             <div class="horse-info">
               <div class="horse-name-row">
                 <span class="horse-name">${h.name}</span>
@@ -2178,8 +2239,7 @@
             <div class="horse-meta">
               <span class="ovr">OVR ${ovrOf(h)}</span>
               ${h.skill ? `<span class="skill-badge">${h.skill.name}</span>` : ''}
-              <span class="age">${h.age} 歲</span>
-              <span class="status ${h.status}">${STATE_LABEL[h.status]}</span>
+              <span class="age ${ageDim}">${h.age} 歲</span>
             </div>
             ${raceBtn}
           </div>
@@ -2199,8 +2259,10 @@
     } else {
       const champId = game.ragnarok && game.ragnarok.champion ? game.ragnarok.champion.id : null;
       const sortedSouls = [...game.souls].sort((a, b) => ovrOf(b) - ovrOf(a));
-      soulListEl.innerHTML = sortedSouls.map(s => `
-        <div class="soul-card ${s.id === champId ? 'soul-champion' : ''}" data-id="${s.id}">
+      soulListEl.innerHTML = sortedSouls.map(s => {
+        const sRarity = (typeof window.rarityOf === 'function') ? window.rarityOf(s).id : '';
+        return `
+        <div class="soul-card ${s.id === champId ? 'soul-champion' : ''}" data-id="${s.id}"${sRarity ? ` data-rarity="${sRarity}"` : ''}>
           <div class="horse-info">
             <div class="horse-name-row">
               <span class="soul-name">${s.name}</span>
@@ -2210,7 +2272,8 @@
           </div>
           <span class="soul-ovr">OVR ${ovrOf(s)}</span>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     const logEl = document.getElementById('log');

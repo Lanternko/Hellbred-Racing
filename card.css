@@ -377,3 +377,44 @@
   .card-ovr-num { font-size: 64px; }
   .card-name { font-size: 19px; }
 }
+
+/* === 馬廄 / 靈魂區 卡片稀有度主題 === */
+[data-rarity="common"]    { --r-edge: #94a3b8; --r-tint-strong: rgba(148,163,184,.16); --r-tint-soft: rgba(148,163,184,.04); }
+[data-rarity="rare"]      { --r-edge: #7eb6f5; --r-tint-strong: rgba(79,142,216,.22); --r-tint-soft: rgba(79,142,216,.05); }
+[data-rarity="epic"]      { --r-edge: #5fe0b3; --r-tint-strong: rgba(30,184,138,.22); --r-tint-soft: rgba(30,184,138,.05); }
+[data-rarity="legendary"] { --r-edge: #ffd576; --r-tint-strong: rgba(245,177,62,.28); --r-tint-soft: rgba(245,177,62,.06); }
+[data-rarity="mythic"]    { --r-edge: #ff7b6b; --r-tint-strong: rgba(239,68,68,.30); --r-tint-soft: rgba(239,68,68,.07); }
+[data-rarity="godlike"]   { --r-edge: #d6b4ff; --r-tint-strong: rgba(163,104,240,.32); --r-tint-soft: rgba(163,104,240,.09); }
+
+.horse-card[data-rarity],
+.soul-card[data-rarity]:not(.soul-champion) {
+  border-left: 4px solid var(--r-edge);
+  background:
+    linear-gradient(95deg, var(--r-tint-strong), var(--r-tint-soft) 55%, transparent 100%),
+    var(--bg-card);
+}
+.horse-card[data-rarity="legendary"] { box-shadow: 0 0 12px rgba(245,177,62,.22), var(--raise-sm), var(--drop); }
+.horse-card[data-rarity="mythic"]    { box-shadow: 0 0 14px rgba(239,68,68,.28), var(--raise-sm), var(--drop); }
+.horse-card[data-rarity="godlike"]   { box-shadow: 0 0 18px rgba(163,104,240,.4), var(--raise-sm), var(--drop); }
+
+/* 數字統一加 dark backdrop pill，避免在 rarity 色底上跟突變紅 / 技能金 / OVR 金混色 */
+.horse-card[data-rarity] .stat-pill {
+  padding: 3px 10px;
+  background: rgba(0, 0, 0, .32);
+  border-radius: 3px;
+}
+.horse-card[data-rarity] .ovr {
+  padding: 3px 10px;
+  background: rgba(0, 0, 0, .35);
+  border-radius: 3px;
+}
+.soul-card[data-rarity]:not(.soul-champion) .soul-ovr {
+  padding: 3px 9px;
+  background: rgba(0, 0, 0, .32);
+  border-radius: 3px;
+}
+
+/* 不能參賽（非 peak）→ 歲數枯萎 */
+.horse-card .age.dim { opacity: 0.38; }
+.horse-card[data-rarity] { cursor: pointer; }
+.soul-card[data-rarity] { cursor: pointer; }
