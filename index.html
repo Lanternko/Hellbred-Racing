@@ -431,36 +431,86 @@
 
   /* 交配所 */
   .breeding-panel {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px 22px;
+    padding: 16px 20px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 4px;
     box-shadow: var(--raise-sm), var(--drop);
     margin-bottom: 24px;
-    flex-wrap: wrap;
   }
-  .breeding-select {
-    font-family: var(--font-body);
-    font-size: 14px;
-    padding: 9px 12px;
-    background: var(--bg);
-    color: var(--text);
+  .breed-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .breed-col-title {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .breed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .breed-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,.2);
     border: 1px solid var(--border);
     border-radius: 4px;
-    flex: 1;
-    min-width: 180px;
     cursor: pointer;
+    transition: border-color 0.12s, background 0.12s;
+    user-select: none;
   }
-  .breeding-select:focus { outline: 1px solid var(--accent); outline-offset: 1px; }
-  .breeding-select:disabled { opacity: 0.5; cursor: not-allowed; }
-  .breed-cross {
-    font-family: var(--font-mono);
-    font-size: 24px;
-    color: var(--text-dim);
-    padding: 0 4px;
+  .breed-card:hover:not(.disabled):not(.selected) {
+    border-color: var(--text-dim);
+    background: rgba(0,0,0,.35);
+  }
+  .breed-card.selected {
+    border-color: var(--accent);
+    background: rgba(173,47,69,.18);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+  }
+  .breed-card.disabled { opacity: 0.4; cursor: not-allowed; }
+  .breed-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .breed-card-name {
+    font-size: 13px; font-weight: 700;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .breed-card-stats {
+    font-size: 10px; color: var(--text-dim); font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+  }
+  .breed-card-ovr {
+    font-family: var(--font-mono); font-size: 16px; color: var(--gold);
+    font-weight: 700; line-height: 1; white-space: nowrap;
+  }
+  .breed-card-age { font-size: 9px; color: var(--text-dim); letter-spacing: 0.1em; }
+  .breed-empty {
+    padding: 24px 12px; text-align: center; color: var(--text-dim);
+    font-size: 12px; font-style: italic;
+    border: 1px dashed var(--border); border-radius: 4px;
+  }
+  .breed-pair-display {
+    text-align: center; font-size: 12px; color: var(--text-dim);
+    margin: 8px 0; letter-spacing: 0.04em; min-height: 18px;
+  }
+  .breed-pair-display .pair-name { color: var(--text); font-weight: 700; }
+  .breed-pair-display .pair-x { margin: 0 8px; color: var(--accent); font-family: var(--font-mono); }
+  .breed-actions {
+    display: flex; gap: 10px; justify-content: center; margin-top: 10px;
+    flex-wrap: wrap;
   }
   .breed-btn {
     font-family: var(--font-body);
@@ -808,6 +858,23 @@
   .rag-rank-row .rag-rank-score { color: var(--text-dim); font-size: 13px; min-width: 52px; text-align: right; }
   .log-entry.soul { color: var(--c-5); }
 
+  /* 場地 / 屬性 badge */
+  .attr-badge, .terrain-badge {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .attr-badge.attr-Normal { background: rgba(98,85,101,.55); color: var(--c-6); }
+  .attr-badge.attr-Fire   { background: rgba(234,79,54,.22); color: var(--c-9); }
+  .attr-badge.attr-Ice    { background: rgba(139,155,180,.22); color: var(--c-5); }
+  .attr-badge.attr-Sand   { background: rgba(171,148,122,.22); color: var(--c-4); }
+  .attr-badge.attr-All    { background: rgba(249,194,43,.22); color: var(--gold); }
+  .terrain-badge { background: rgba(0,0,0,.28); color: var(--text-dim); margin-left: 3px; }
+
   /* 靈魂側欄 */
   .soul-panel {
     position: fixed;
@@ -960,9 +1027,13 @@
 
     .race-btn, .buy-btn { font-size: 12px; padding: 10px 12px 12px; letter-spacing: 0.15em; }
 
-    .breeding-panel { padding: 14px; gap: 10px; }
-    /* 16px 防 iOS Safari 對 select 自動 zoom */
-    .breeding-select { font-size: 16px; padding: 10px 12px; min-width: 130px; }
+    .breeding-panel { padding: 14px; }
+    .breed-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .breed-list { max-height: 240px; }
+    .breed-card { padding: 7px 10px; gap: 8px; }
+    .breed-card-name { font-size: 12px; }
+    .breed-card-stats { font-size: 10px; }
+    .breed-card-ovr { font-size: 14px; }
     .breed-btn { font-size: 13px; padding: 12px 16px 14px; }
 
     .race-entry { padding: 10px 14px; gap: 10px; font-size: 14px; }
@@ -1035,17 +1106,23 @@
   <div class="horse-list" id="horse-list"></div>
 
   <div class="section-title">交配所</div>
-  <div class="breeding-panel">
-    <select class="breeding-select" id="breed-father">
-      <option value="">— 公馬 —</option>
-    </select>
-    <span class="breed-cross">×</span>
-    <select class="breeding-select" id="breed-mother">
-      <option value="">— 母馬 —</option>
-    </select>
-    <button class="breed-btn" id="breed-btn" disabled>交配</button>
-    <button class="breed-btn" id="breed-all-btn" disabled>一鍵交配</button>
+  <div class="breeding-panel" id="breeding-panel">
+    <div class="breed-grid">
+      <div>
+        <div class="breed-col-title">公 馬</div>
+        <div class="breed-list" id="breed-male-list"></div>
+      </div>
+      <div>
+        <div class="breed-col-title">母 馬</div>
+        <div class="breed-list" id="breed-female-list"></div>
+      </div>
+    </div>
+    <div class="breed-pair-display" id="breed-pair-display"></div>
     <div id="vet-advice-block" class="vet-advice" style="display:none"></div>
+    <div class="breed-actions">
+      <button class="breed-btn" id="breed-btn" disabled>交配</button>
+      <button class="breed-btn" id="breed-all-btn" disabled>一鍵交配</button>
+    </div>
   </div>
 
   <div class="section-header">
@@ -1181,6 +1258,7 @@
   }
 
   const STAT_LABEL = { speed: '速度', power: '力量', stamina: '體力' };
+  const ATTR_LABEL = { Normal: '一般', Fire: '烈焰', Ice: '冰川', Sand: '沙漠', All: '全場地' };
   const FOUR_KINGS = [
     { name: '炎獄王',   speed: 85, power: 65, stamina: 70 }, // OVR 73
     { name: '冥府王',   speed: 65, power: 88, stamina: 70 }, // OVR 74
@@ -1331,6 +1409,8 @@
     currentTurnMajor: false,
     ragnarok: null,
     sweeping: false,
+    breedFatherId: null,
+    breedMotherId: null,
   };
   let sweepTimer = null;
 
@@ -1406,8 +1486,9 @@
     const father = game.horses.find(h => h.id === fatherId);
     const mother = game.horses.find(h => h.id === motherId);
     if (!father || !mother) return;
-    if (father.status !== STATE_RETIRED || mother.status !== STATE_RETIRED) return;
+    if (father.age < 3 || mother.age < 3) return;
     if (father.gender !== 'male' || mother.gender !== 'female') return;
+    if (mother.bredThisTurn) return;
 
     const events = [];
     const mutated = { speed: false, power: false, stamina: false };
@@ -1501,6 +1582,8 @@
       won, reward, isMajor,
       skillEarned: newSkill ? newSkill.name : null,
       raceType: raceType.name,
+      raceAttr: raceType.attr,
+      raceTerrain: raceType.terrain,
       traitMult: traitMult !== 1 ? traitMult : null,
     });
     if (game.races.length > 5) game.races.length = 5;
@@ -1532,10 +1615,10 @@
   }
 
   function breedAll() {
-    const retiredMales = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'male');
-    if (!retiredMales.length) return;
-    const bestMale = retiredMales.reduce((a, b) => ovrOf(a) >= ovrOf(b) ? a : b);
-    const eligibleFemales = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'female' && !h.bredThisTurn);
+    const eligibleMales = game.horses.filter(h => h.age >= 3 && h.gender === 'male');
+    if (!eligibleMales.length) return;
+    const bestMale = eligibleMales.reduce((a, b) => ovrOf(a) >= ovrOf(b) ? a : b);
+    const eligibleFemales = game.horses.filter(h => h.age >= 3 && h.gender === 'female' && !h.bredThisTurn);
     if (!eligibleFemales.length) return;
     eligibleFemales.forEach(f => breed(bestMale.id, f.id));
   }
@@ -1603,8 +1686,9 @@
       ...playerFighters.map(h => {
         const hasG01 = h.traits && h.traits.displayed.some(t => t.id === 'G01');
         let traitMult = 1.0;
+        let raceAttr, raceTerrain;
         if (hasG01) {
-          // G01: all blue traits and terrains count
+          raceAttr = 'All'; raceTerrain = '全場地';
           const d = h.traits.displayed;
           if (d.some(t => t.id === 'B01')) traitMult += 0.08;
           if (d.some(t => t.id === 'B02')) traitMult += 0.08;
@@ -1614,12 +1698,13 @@
           if (d.some(t => t.id === 'B06')) traitMult += 0.10;
         } else {
           const rt = pick(RACE_TYPES);
+          raceAttr = rt.attr; raceTerrain = rt.terrain;
           traitMult = applyTraitMultiplier(h, rt.attr, rt.terrain);
         }
         return {
           name: h.name, ovr: ovrOf(h),
           skillName: h.skill ? h.skill.name : null,
-          hasG01,
+          hasG01, raceAttr, raceTerrain,
           score: Math.round(totalStats(h) * traitMult * variance()),
           isPlayer: true,
         };
@@ -1678,7 +1763,7 @@
     } else {
       feed.innerHTML = game.races.map(r => `
         <div class="race-entry ${r.won ? 'win' : 'loss'}${r.isMajor ? ' major' : ''}">
-          <span class="race-year">${r.isMajor ? '⚡ ' : ''}紀年 ${r.year.toLocaleString()}${r.raceType ? ' · ' + r.raceType : ''}</span>
+          <span class="race-year">${r.isMajor ? '⚡ ' : ''}紀年 ${r.year.toLocaleString()}${r.raceType ? ' · ' + r.raceType : ''}${r.raceAttr ? ` <span class="attr-badge attr-${r.raceAttr}">${ATTR_LABEL[r.raceAttr]||r.raceAttr}</span>` : ''}${r.raceTerrain ? `<span class="terrain-badge">${r.raceTerrain}</span>` : ''}</span>
           <span class="race-matchup">
             <span class="player">${r.player.name}</span><span class="score">[${r.player.score}]</span>
             <span class="vs">VS</span>
@@ -1690,22 +1775,54 @@
       `).join('');
     }
 
-    const fatherSel = document.getElementById('breed-father');
-    const motherSel = document.getElementById('breed-mother');
+    const males   = game.horses.filter(h => h.age >= 3 && h.gender === 'male');
+    const females = game.horses.filter(h => h.age >= 3 && h.gender === 'female');
+    if (!males.find(h => h.id === game.breedFatherId)) game.breedFatherId = null;
+    const selF = females.find(h => h.id === game.breedMotherId);
+    if (!selF || selF.bredThisTurn) game.breedMotherId = null;
+
+    const cardHtml = (h, role) => {
+      const sel = (role === 'male' ? game.breedFatherId : game.breedMotherId) === h.id;
+      const disabled = role === 'female' && h.bredThisTurn;
+      const cls = `breed-card${sel ? ' selected' : ''}${disabled ? ' disabled' : ''}`;
+      const ageTag = disabled ? '已配' : `${h.age}歲`;
+      return `
+        <div class="${cls}" data-bid="${h.id}" data-role="${role}">
+          <div class="breed-card-main">
+            <div class="breed-card-name">${h.name}${h.skill ? ` <span class="skill-badge">${h.skill.name}</span>` : ''}</div>
+            <div class="breed-card-stats">速${h.speed}・力${h.power}・體${h.stamina}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="breed-card-ovr">${ovrOf(h)}</div>
+            <div class="breed-card-age">${ageTag}</div>
+          </div>
+        </div>`;
+    };
+    const maleListEl   = document.getElementById('breed-male-list');
+    const femaleListEl = document.getElementById('breed-female-list');
+    maleListEl.innerHTML   = males.length   ? males.map(h => cardHtml(h, 'male')).join('')     : `<div class="breed-empty">無 3 歲以上公馬</div>`;
+    femaleListEl.innerHTML = females.length ? females.map(h => cardHtml(h, 'female')).join('') : `<div class="breed-empty">無 3 歲以上母馬</div>`;
+
     const breedBtnEl = document.getElementById('breed-btn');
-    const prevFather = fatherSel.value;
-    const prevMother = motherSel.value;
-    const males = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'male');
-    const females = game.horses.filter(h => h.status === STATE_RETIRED && h.gender === 'female' && !h.bredThisTurn);
-    const optionFor = h => `<option value="${h.id}">${h.name} OVR ${ovrOf(h)} ｜ ${h.speed}/${h.power}/${h.stamina}</option>`;
-    fatherSel.innerHTML = `<option value="">— 公馬 —</option>` + males.map(optionFor).join('');
-    motherSel.innerHTML = `<option value="">— 母馬 —</option>` + females.map(optionFor).join('');
-    if (males.find(h => h.id === prevFather)) fatherSel.value = prevFather;
-    if (females.find(h => h.id === prevMother)) motherSel.value = prevMother;
-    fatherSel.disabled = !males.length;
-    motherSel.disabled = !females.length;
-    breedBtnEl.disabled = !(fatherSel.value && motherSel.value);
-    document.getElementById('breed-all-btn').disabled = !males.length || !females.length;
+    const father = males.find(h => h.id === game.breedFatherId);
+    const mother = females.find(h => h.id === game.breedMotherId && !h.bredThisTurn);
+    const pairEl = document.getElementById('breed-pair-display');
+    pairEl.innerHTML = (father && mother)
+      ? `<span class="pair-name">${father.name}</span><span class="pair-x">×</span><span class="pair-name">${mother.name}</span>`
+      : `<span style="opacity:.5">— 各選一隻公母即可看博士建言 —</span>`;
+    breedBtnEl.disabled = !(father && mother);
+    const fertileFemales = females.filter(h => !h.bredThisTurn);
+    document.getElementById('breed-all-btn').disabled = !males.length || !fertileFemales.length;
+
+    const vetBlock = document.getElementById('vet-advice-block');
+    if (father && mother) {
+      const advice = getVetAdvice(father, mother);
+      vetBlock.style.display = '';
+      vetBlock.className = `vet-advice${advice.sev ? ' sev-' + advice.sev : ''}`;
+      vetBlock.innerHTML = `<div class="vet-name">🩺 瓦 拉 克 博 士 · 建 言</div><div class="vet-text">${advice.text.replace(/\n/g, '<br>')}</div>`;
+    } else {
+      vetBlock.style.display = 'none';
+    }
 
     const buyAllBtn = document.getElementById('buy-all-market-btn');
     buyAllBtn.disabled = !game.market.some(m => game.money >= m.price);
@@ -1825,9 +1942,12 @@
       const rankLabel = rank ? (RANK_LABELS[rank - 1] || `第 ${rank} 名`) : '無人參戰';
       const rows = entries.map((e, i) => {
         const rl = RANK_LABELS[i] || `${i + 1}`;
+        const terrainTag = e.isPlayer && e.raceAttr
+          ? ` <span class="attr-badge attr-${e.raceAttr}">${ATTR_LABEL[e.raceAttr]||e.raceAttr}</span><span class="terrain-badge">${e.raceTerrain}</span>`
+          : '';
         return `<div class="rag-rank-row${e.isPlayer ? ' player' : ''}" style="animation-delay:${i * 0.1}s">
           <span class="rag-rank-num">${rl}</span>
-          <span class="rag-rank-name">${e.name}${e.skillName ? ` ·${e.skillName}` : ''}</span>
+          <span class="rag-rank-name">${e.name}${e.skillName ? ` ·${e.skillName}` : ''}${terrainTag}</span>
           <span class="rag-rank-ovr">OVR ${e.ovr}</span>
           <span class="rag-rank-score">[${e.score}]</span>
         </div>`;
@@ -1869,6 +1989,12 @@
     } else {
       eligible.forEach(h => runRace(h.id));
     }
+    const males   = game.horses.filter(h => h.age >= 3 && h.gender === 'male');
+    const females = game.horses.filter(h => h.age >= 3 && h.gender === 'female' && !h.bredThisTurn);
+    if (males.length && females.length) {
+      requestAnimationFrame(() =>
+        document.getElementById('breeding-panel').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    }
   });
   document.getElementById('horse-list').addEventListener('click', (e) => {
     const raceBtn = e.target.closest('.race-btn');
@@ -1888,30 +2014,25 @@
     if (!btn || btn.disabled) return;
     buyMarketHorse(btn.dataset.mid);
   });
-  const fatherSel = document.getElementById('breed-father');
-  const motherSel = document.getElementById('breed-mother');
-  const breedBtnEl = document.getElementById('breed-btn');
-
-  function updateVetAdvice() {
-    const father = game.horses.find(h => h.id === fatherSel.value);
-    const mother = game.horses.find(h => h.id === motherSel.value);
-    const block = document.getElementById('vet-advice-block');
-    if (!father || !mother) { block.style.display = 'none'; return; }
-    const advice = getVetAdvice(father, mother);
-    block.style.display = '';
-    block.className = `vet-advice${advice.sev ? ' sev-' + advice.sev : ''}`;
-    block.innerHTML = `<div class="vet-name">🩺 瓦 拉 克 博 士 · 建 言</div><div class="vet-text">${advice.text.replace(/\n/g, '<br>')}</div>`;
+  function handleBreedListClick(e) {
+    const card = e.target.closest('.breed-card');
+    if (!card || card.classList.contains('disabled')) return;
+    const role = card.dataset.role;
+    const id = card.dataset.bid;
+    if (role === 'male') {
+      game.breedFatherId = (game.breedFatherId === id) ? null : id;
+    } else {
+      game.breedMotherId = (game.breedMotherId === id) ? null : id;
+    }
+    render();
   }
+  document.getElementById('breed-male-list').addEventListener('click', handleBreedListClick);
+  document.getElementById('breed-female-list').addEventListener('click', handleBreedListClick);
 
-  const updateBreedBtn = () => {
-    breedBtnEl.disabled = !(fatherSel.value && motherSel.value);
-    updateVetAdvice();
-  };
-  fatherSel.addEventListener('change', updateBreedBtn);
-  motherSel.addEventListener('change', updateBreedBtn);
-  breedBtnEl.addEventListener('click', () => {
-    if (!fatherSel.value || !motherSel.value) return;
-    breed(fatherSel.value, motherSel.value);
+  document.getElementById('breed-btn').addEventListener('click', () => {
+    if (!game.breedFatherId || !game.breedMotherId) return;
+    breed(game.breedFatherId, game.breedMotherId);
+    game.breedMotherId = null;
   });
   document.getElementById('breed-all-btn').addEventListener('click', breedAll);
 
