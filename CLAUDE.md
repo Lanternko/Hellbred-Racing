@@ -11,6 +11,8 @@
   - `card.js` / `card.css` — 馬匹詳細卡片（稀有度判定 / 翻牌 modal / 馬廄 rarity 主題）
   - `prompts/` — 三段式交接 prompt（step-1 / 2 / 3）
   - `memory/playtest_notes.md` — 數值崩壞觀察紀錄
+  - `memory/stage_specs.md` — Stage C/D/E 完整規格（從 CLAUDE.md 移出）
+  - `memory/post-mvp-wishlist.md` — 已解凍系統紀錄
   - `CLAUDE.md` — 此檔（SSoT）
 
 ## Commands
@@ -36,69 +38,13 @@ Stage A + B + C + D + 命名系統 + 卡片系統已實作。**Stage E**（替�
 
 **設計哲學**：特性決定方向，數值決定下限。資訊 B方案（部分遮蔽）— 隱性僅顯示「血統中潛藏不詳因子」。
 
-## Stage C 規格（已實作）
+## Stage 規格（詳見 [memory/stage_specs.md](memory/stage_specs.md)）
 
-**遺傳：** 藍特 A 型隱性（雙親同位點 70% / 單親 50% 隱性，B08 提升至 85% / 80%）。紅特 B 型顯性（單親 55% / 雙親 85% + 3% 突變 + 初始 8% / 市場 12% 自然帶）。金特 2% 突變，G01/G02 各半。
+**Stage C**（8藍/6紅/2金）：賽道/地形/共鳴/多產 BUFF；燃盡/玻璃骨/玻璃心/孤傲/短命/暴食 DEBUFF；地獄之王/鳳凰之血 金特；獸醫建言。`traits: { displayed, recessiveFlags }`
 
-**特性清單：** 8 藍（B01–06 賽道/地形 +8–10%、B07 共鳴 / B08 多產）/ 6 紅（R01 燃盡 / R02 玻璃骨 / R03 玻璃心 / R04 孤傲 / R05 短命 / R06 暴食 -1G）/ 2 金（G01 地獄之王 / G02 鳳凰之血）。詳細 desc 見 [index.html](index.html) `TRAIT_DATA`。
+**Stage D**（6-turn cycle）：T6/12/18/24/30 大典；T3/9/15/21/27 小賽事；其餘活動。馬廄 6→11；金幣 ÷100；印記 2 枚（無瑕之眼 M01 / 戰神血脈 M02）。`marks: [], marksRecessive: []`
 
-**獸醫建言順序：** 金特共鳴 → 雙親紅特共鳴 → 單親紅特 → 隱性位點交集 → 血統相性 fallback。
-
-**馬匹欄位：** `traits: { displayed: [], recessiveFlags: [] }`
-
-## Stage D 規格（6-turn cycle + 印記）
-
-**回合結構**（30 turn = 5 cycle）：
-- T1, T2, T4, T5：**活動 turn**（彈三選一 modal，獎勵：特性卡 / 稀有馬場 buff，無賽事）
-- T3：**小賽事 turn**（普通比賽，可買馬交配）
-- T6：**大典 turn**（major race，冠軍獲得印記三選一，可買馬交配）
-- T30 大典結束 → 玩家手動按鈕進入 Ragnarök 終局
-
-**金幣 down-scale ÷100**：起始 10G / 賽事 +3 勝 +1 敗 / 大典 +10 勝 +2 敗 / 買馬 1–12G / R06 暴食 -1G/年。
-
-**馬廄 fix size**：初始 6 格，每 6 turn +1（T6/12/18/24/30），最終 11 格。滿時無法買馬 / 接受新生兒（突變 G02 重生例外，仍進靈魂區）。
-
-**交配年齡 1–4**（補償馬廄縮小）：1 歲幼駒可交配，5 歲入靈魂區後不可。
-
-**印記**（A 型隱性遺傳，每馬最多 1 枚）：
-- 取得：大典冠軍三選一（從未持有印記池）
-- 遺傳：雙親同印記 70% 顯現 / 單親 50% 隱性傳遞
-- MVP 兩枚：
-  - **無瑕之眼**：速度上限 100 → 115（突破 cap）
-  - **戰神血脈**：大典中三圍視為 +10
-- TODO（Run #2 後）：不朽鋼骨（力量抗劣化）/ 無盡氣血（體力抗時間退化）/ 鬼血傳承（子代突變率 10→30%）
-
-**馬匹新欄位：** `marks: []`（max 1）, `marksRecessive: []`（隱性傳遞用）
-
-## Stage E 規格（替補席 + 賽事優先 + Phase Lock）
-
-**馬廄拆分**：
-- `game.horses` = **active roster**（先發名單），cap = `stableSize`（6 → 11）
-- `game.bench` = **替補席**，無上限
-- 替補馬可育種前提是先換上 active 並參賽過。
-
-**回合 sub-phase**（race / major turn 才走）：
-- `roster`：玩家用「下放替補 / 上場」整隊。「整隊完成」按鈕推進。
-- `racing`：點「全員出戰」→ active 全員賽完 → 自動進 breeding。
-- `breeding`：黑市 + 交配所開啟，完成後「下一年」推進。
-- 活動 turn (T1/2/4/5)：subPhase = null，只走三選一 modal → 下一年。
-
-**育種規則改動**：
-- 必須**雙親當年都已完賽**（`racedThisTurn === true`）才能交配。
-- 公馬：當年最多 1 胎（`father.bredThisTurn` block）。
-- 母馬：取消一胎限制（cap 6 自然壓制）。
-- 智能交配自動避免重用同一公馬。
-
-**新買 / 新生馬本年凍結**：購入或生出時即 `racedThisTurn = true` & `bredThisTurn = true` —
-無法當年參賽、無法當年交配，避免「買強馬立刻刷一輪」。
-
-**自動入替**：active 有空位（老化 / 玩家下放）→ `promoteFromBench()` 從 bench 高 OVR 自動補上。
-
-**UI 單一職責**：body 加 `subphase-{event|roster|racing|breeding}` / `phase-{init|end}` class，
-CSS 隱藏不相干區塊（黑市/交配/race button/swap button）。
-
-**命名平民化**：「千年 → 年」、「千年大典 → 大典」、「下一個千年 → 下一年」。
-yearsElapsed 內部仍是 1000 倍數，顯示時 `/ 1000`。
+**Stage E**（替補席 + Phase Lock）：active/bench 拆分；subPhase roster→racing→breeding；雙親當年完賽才可交配；公馬一胎/年；新買/新生本年凍結；命名平民化（千年→年）。
 
 ## Next actions
 - [x] Stage A / B / C / D + 卡片系統已完成（最近：D commit `f269baa`，卡片 `fa67635`）

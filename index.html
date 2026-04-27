@@ -717,6 +717,45 @@
     box-shadow: var(--raise-sm);
   }
 
+  /* 賽道預告卡 */
+  .race-venue-card {
+    padding: 10px 14px 12px;
+    background: rgba(20, 22, 28, 0.55);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  .race-venue-card .venue-label {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .race-venue-card .venue-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .race-venue-card .venue-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.1em;
+  }
+  .race-venue-card .venue-badges { display: inline-flex; gap: 4px; }
+  .race-venue-card .venue-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    letter-spacing: 0.05em;
+  }
+  body.subphase-event #race-venue-card,
+  body.subphase-breeding #race-venue-card,
+  body.phase-end #race-venue-card,
+  body.phase-init #race-venue-card { display: none !important; }
+
   /* 大典橫幅 */
   .major-event-banner {
     padding: 10px 18px;
@@ -931,13 +970,11 @@
   body.subphase-event #fab-omni { display: none !important; }
 
   body.subphase-roster #breed-section,
-  body.subphase-roster #market-section,
   body.subphase-roster .race-btn,
   body.subphase-roster #all-race-btn,
   body.subphase-roster #fab-omni { display: none !important; }
 
   body.subphase-racing #breed-section,
-  body.subphase-racing #market-section,
   body.subphase-racing #roster-actions,
   body.subphase-racing .roster-swap-btn { display: none !important; }
 
@@ -977,32 +1014,6 @@
     transition: background 0.12s; white-space: nowrap;
   }
   .roster-btn:hover { background: rgba(139,155,180,.28); }
-
-  /* 靈魂區 */
-  .soul-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
-  .soul-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 16px;
-    background: rgba(46,34,47,.5);
-    border: 1px solid var(--c-2);
-    border-left: 3px solid var(--c-5);
-    border-radius: 4px;
-    opacity: 0.75;
-  }
-  .soul-ovr {
-    font-family: var(--font-mono);
-    font-size: 18px;
-    color: var(--c-5);
-    line-height: 1;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-  }
-  .soul-name { font-size: 15px; font-weight: 700; color: var(--text-dim); }
-  .soul-champion { border-left-color: var(--gold); opacity: 1; background: rgba(249,194,43,.08); }
-  .soul-champion .soul-name { color: var(--gold); }
-  .soul-champion .soul-ovr  { color: var(--gold); }
 
   /* Ragnarök 終局 */
   .ragnarok-banner {
@@ -1078,58 +1089,6 @@
   .attr-badge.attr-All    { background: rgba(249,194,43,.22); color: var(--gold); }
   .terrain-badge { background: rgba(0,0,0,.28); color: var(--text-dim); margin-left: 3px; }
 
-  /* 靈魂側欄 */
-  .soul-panel {
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100vh;
-    width: 260px;
-    background: var(--bg-card);
-    border-right: 1px solid var(--border);
-    z-index: 200;
-    transform: translateX(calc(-100% + 32px));
-    transition: transform 0.25s var(--ease-snap);
-    box-shadow: 4px 0 16px rgba(0,0,0,.5);
-    display: flex;
-    flex-direction: row;
-  }
-  .soul-panel.open { transform: translateX(0); }
-  .soul-panel-tab {
-    width: 32px;
-    min-width: 32px;
-    background: rgba(139,155,180,.15);
-    color: var(--c-5);
-    border: none;
-    border-left: 3px solid var(--c-5);
-    writing-mode: vertical-lr;
-    cursor: pointer;
-    font-family: var(--font-body);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.25em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.12s;
-    order: 2;
-    padding: 20px 0;
-  }
-  .soul-panel-tab:hover { background: rgba(139,155,180,.3); }
-  .soul-panel-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 14px 20px;
-    order: 1;
-  }
-  .soul-panel-header {
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: 0.4em;
-    margin-bottom: 14px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-  }
   .stat-pill.boosted { color: var(--gold); }
   .stat-pill.boosted strong { color: var(--gold); }
 
@@ -1174,38 +1133,6 @@
     color: var(--text-dim);
     cursor: not-allowed;
   }
-
-  /* 靈魂區 mobile 觸發按鈕（桌機隱藏） */
-  .soul-fab {
-    display: none;
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 201;
-    width: 30px;
-    height: 30px;
-    background: rgba(139,155,180,.2);
-    border: 1px solid var(--c-5);
-    border-radius: 4px;
-    color: var(--c-5);
-    font-family: var(--font-body);
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
-    letter-spacing: 0;
-  }
-  .soul-fab:hover { background: rgba(139,155,180,.35); }
-  /* 半透明遮罩（mobile panel 打開時） */
-  .soul-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.45);
-    z-index: 199;
-  }
-  .soul-backdrop.active { display: block; }
 
   /* 行動版 (≤600px)：放大字級避免手機讀不到 */
   @media (max-width: 600px) {
@@ -1258,20 +1185,8 @@
     .horse-list { grid-template-columns: 1fr; }
     .all-race-btn { font-size: 12px; padding: 8px 12px 10px; }
     .major-event-banner { font-size: 12px; letter-spacing: 0.15em; padding: 8px 14px; }
-    .soul-card { padding: 8px 12px; }
-    .soul-name { font-size: 14px; }
-    .soul-ovr { font-size: 16px; }
     .ragnarok-title { font-size: 22px; }
     .ragnarok-champion { font-size: 17px; }
-
-    /* Mobile soul panel: fully hidden, controlled by soul-fab */
-    .soul-panel {
-      width: min(260px, 85vw);
-      transform: translateX(-100%);
-    }
-    .soul-panel.open { transform: translateX(0); }
-    .soul-panel-tab { display: none; }
-    .soul-fab { display: flex; }
 
     .fab-actions {
       position: fixed;
@@ -1308,15 +1223,6 @@
 </style>
 </head>
 <body>
-<div id="soul-backdrop" class="soul-backdrop"></div>
-<div id="soul-panel" class="soul-panel">
-  <div class="soul-panel-content">
-    <div class="soul-panel-header">靈魂區</div>
-    <div id="soul-list" class="soul-list"></div>
-  </div>
-  <button class="soul-panel-tab" id="soul-panel-tab">靈魂區</button>
-</div>
-<button class="soul-fab" id="soul-fab">魂</button>
 <div class="container">
   <header>
     <h1>地獄賽馬</h1>
@@ -1338,6 +1244,18 @@
   </div>
 
   <div id="major-event-banner" class="major-event-banner" style="display:none">⚡ 大典 · 賽事獎金加倍、勝者獲賜技能</div>
+
+  <div id="race-venue-card" class="race-venue-card" style="display:none">
+    <div class="venue-label">本年賽道</div>
+    <div class="venue-main">
+      <span class="venue-name" id="venue-name"></span>
+      <span class="venue-badges">
+        <span class="attr-badge" id="venue-attr"></span>
+        <span class="terrain-badge" id="venue-terrain"></span>
+      </span>
+    </div>
+    <div class="venue-hint" id="venue-hint"></div>
+  </div>
 
   <div class="section-header">
     <div class="section-title">先發名單 <span class="stable-cap" id="stable-cap"></span></div>
@@ -1379,12 +1297,12 @@
         <div class="breeding-panel" id="breeding-panel">
           <div class="breed-grid">
             <div>
-              <div class="breed-col-title">公 馬</div>
-              <div class="breed-list" id="breed-male-list"></div>
+              <div class="breed-col-title">選擇已完賽馬匹</div>
+              <div class="breed-list" id="breed-primary-list"></div>
             </div>
-            <div>
-              <div class="breed-col-title">母 馬</div>
-              <div class="breed-list" id="breed-female-list"></div>
+            <div id="breed-step2">
+              <div class="breed-col-title" id="breed-step2-title">選擇配對對象</div>
+              <div class="breed-list" id="breed-secondary-list"></div>
             </div>
           </div>
           <div class="breed-pair-display" id="breed-pair-display"></div>
@@ -1522,31 +1440,41 @@
     };
   }
 
-  function makeMarketHorse() {
+  function makeMarket() {
+    // 保證至少 1 公 1 母，其餘隨機
+    const horses = [makeMarketHorse('male'), makeMarketHorse('female')];
+    for (let i = 2; i < 4; i++) horses.push(makeMarketHorse());
+    return horses.sort(() => Math.random() - 0.5); // 隨機排序避免公馬永遠在前
+  }
+
+  function makeMarketHorse(forcedGender) {
     const turn = game.yearsElapsed / game.yearPerTurn;
     const lo = Math.min(35 + Math.floor(turn), 60);
     const hi = Math.min(70 + Math.floor(turn), 95);
     const stat = () => clamp(randInt(lo, hi), 1, 100);
     const speed = stat(), power = stat(), stamina = stat();
-    const total = speed + power + stamina;
     const mAge = randInt(1, 4);
     const mOrigin = randomOrigin();
     const { surname: mSurname, givenName: mGiven, name: mName } = generateHorseName(mOrigin);
+    const mSkill = Math.random() < 0.15 ? pick(SKILL_LIST) : null;
+    const mOvr = Math.round((speed + power + stamina) / 3);
+    const skillBonus = mSkill ? 3 : 0;
     return {
       id: (crypto.randomUUID && crypto.randomUUID()) || String(Math.random()),
       origin: mOrigin, surname: mSurname, givenName: mGiven, name: mName,
-      gender: Math.random() < 0.5 ? 'male' : 'female',
+      gender: forcedGender || (Math.random() < 0.5 ? 'male' : 'female'),
       age: mAge,
       speed, power, stamina,
       status: statusFromAge(mAge),
       racedThisTurn: false,
       bredThisTurn: false,
-      price: Math.max(1, Math.round(total / 25) + randInt(0, 2)),
-      skill: null,
-      traits: {
-        displayed: Math.random() < 0.12 ? [{ id: pick(RED_IDS), type:'red' }] : [],
-        recessiveFlags: [pick(BLUE_IDS)],
-      },
+      price: Math.max(1, Math.round(mOvr * (5 - mAge) / 20) + skillBonus + randInt(0, 2)),
+      skill: mSkill,
+      traits: (() => {
+        const allPool = [...BLUE_IDS.map(id=>({id,type:'blue'})), ...RED_IDS.map(id=>({id,type:'red'}))];
+        const displayed = Math.random() < 0.35 ? [pick(allPool)] : [];
+        return { displayed, recessiveFlags: [pick(BLUE_IDS)] };
+      })(),
       marks: [],
       marksRecessive: [],
     };
@@ -1839,11 +1767,12 @@
     currentTurnMajor: false,
     currentTurnPhase: 'race', // 'event' | 'race' | 'major'
     ragnarok: null,
-    breedFatherId: null,
-    breedMotherId: null,
+    breedPrimaryId: null,
+    breedSecondaryId: null,
     stableSize: 6,
     bench: [],
     subPhase: null, // 'roster' | 'racing' | 'breeding' | null (event turn)
+    currentRace: null, // { name, attr, terrain } — 整年共用同一賽道，event turn 為 null
     batchRacedThisTurn: false,
     nextMarketBuff: false,
     pendingChoice: null, // { kind: 'event'|'mark', cards: [...], context: {...} }
@@ -1869,40 +1798,15 @@
       makeHorse({ age: 1 }),
       makeHorse({ age: 3 })
     ];
-    game.market = Array.from({ length: 4 }, makeMarketHorse);
+    game.market = makeMarket();
     addLog(`第 0 年 · 馬廄入駐 ${game.horses.length} 匹馬，等候惡魔之王的審判。`);
     render();
   }
 
-  function nextTurn() {
-    if (game.yearsElapsed >= game.maxYears) return;
-    game.yearsElapsed += game.yearPerTurn;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    const currentTurn = game.yearsElapsed / game.yearPerTurn;
-    const phaseInCycle = ((currentTurn - 1) % 6) + 1; // 1..6
-    if (phaseInCycle === 6) {
-      game.currentTurnPhase = 'major';
-      game.currentTurnMajor = true;
-    } else if (phaseInCycle === 3) {
-      game.currentTurnPhase = 'race';
-      game.currentTurnMajor = false;
-    } else {
-      game.currentTurnPhase = 'event';
-      game.currentTurnMajor = false;
-    }
-    if (currentTurn % 6 === 0) {
-      game.stableSize += 1;
-      addLog(`🏛 馬廄擴建 → ${game.stableSize} 格`, 'soul');
-    }
-
-    game.batchRacedThisTurn = false;
-
+  function ageAllHorses() {
     for (const h of allOwnedHorses()) {
       h.age += 1;
       h.status = statusFromAge(h.age);
-      h.racedThisTurn = false;
-      h.bredThisTurn = false;
     }
     let foodCost = 0;
     const foodEaters = [];
@@ -1916,7 +1820,6 @@
       game.money = Math.max(0, game.money - foodCost);
       addLog(`暴食特性 −${foodCost}G 飼料費（${foodEaters.join('、')}）`, 'death');
     }
-
     const ascending = [];
     const reborn = [];
     const ageOutFromArray = (arr) => {
@@ -1948,16 +1851,47 @@
       addLog(`升入靈魂區：${ascending.map(h => h.name).join('、')}`, 'soul');
     }
     promoteFromBench();
+  }
+
+  function nextTurn() {
+    if (game.yearsElapsed >= game.maxYears) return;
+    game.yearsElapsed += game.yearPerTurn;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const currentTurn = game.yearsElapsed / game.yearPerTurn;
+    const phaseInCycle = ((currentTurn - 1) % 6) + 1; // 1..6
+    if (phaseInCycle === 6) {
+      game.currentTurnPhase = 'major';
+      game.currentTurnMajor = true;
+    } else if (phaseInCycle === 3) {
+      game.currentTurnPhase = 'race';
+      game.currentTurnMajor = false;
+    } else {
+      game.currentTurnPhase = 'event';
+      game.currentTurnMajor = false;
+    }
+    if (currentTurn % 6 === 0) {
+      game.stableSize += 1;
+      addLog(`🏛 馬廄擴建 → ${game.stableSize} 格`, 'soul');
+    }
+
+    game.batchRacedThisTurn = false;
+
+    for (const h of allOwnedHorses()) {
+      h.racedThisTurn = false;
+      h.bredThisTurn = false;
+    }
 
     const buffApplied = game.nextMarketBuff;
-    game.market = Array.from({ length: 4 }, makeMarketHorse);
+    game.market = makeMarket();
     if (buffApplied) {
       game.market.forEach(m => {
         m.speed = clamp(m.speed + 15, 1, 100);
         m.power = clamp(m.power + 15, 1, 100);
         m.stamina = clamp(m.stamina + 15, 1, 100);
-        const total = m.speed + m.power + m.stamina;
-        m.price = Math.max(1, Math.round(total / 25) + randInt(0, 2));
+        const mOvr = Math.round((m.speed + m.power + m.stamina) / 3);
+        const skillBonus = m.skill ? 3 : 0;
+        m.price = Math.max(1, Math.round(mOvr * (5 - m.age) / 20) + skillBonus + randInt(0, 2));
         m._rare = true;
       });
       addLog(`✨ 稀有馬場開張 · 黑市馬匹三圍 +15`, 'soul');
@@ -1971,9 +1905,12 @@
 
     if (game.currentTurnPhase === 'event') {
       game.subPhase = null;
-      pushPending(makeEventChoice());
+      game.currentRace = null;
+      pushPending(makeEventChoice()); // 老化延遲到玩家選完卡片後（pickChoiceCard）
     } else {
       game.subPhase = 'roster';
+      game.currentRace = pick(RACE_TYPES);
+      // 賽事回合：老化延遲到賽事結束後（advanceFromRacing），讓馬先比賽再退役
     }
 
     if (game.yearsElapsed >= game.maxYears) {
@@ -2019,6 +1956,7 @@
   }
   function advanceFromRacing() {
     if (game.subPhase !== 'racing') return;
+    ageAllHorses(); // 賽事結束才老化，確保 age-4 馬能出賽後才退役
     game.subPhase = 'breeding';
     render();
   }
@@ -2051,7 +1989,7 @@
   }
 
   function buyMarketHorse(marketId) {
-    if (game.subPhase !== 'breeding') return;
+    if (!['roster', 'racing', 'breeding'].includes(game.subPhase)) return;
     const idx = game.market.findIndex(m => m.id === marketId);
     if (idx < 0) return;
     const horse = game.market[idx];
@@ -2059,9 +1997,6 @@
     const price = horse.price;
     delete horse.price;
     game.money -= price;
-    // 新買的馬當年不可參賽、不可交配
-    horse.racedThisTurn = true;
-    horse.bredThisTurn = true;
     const benched = game.horses.length >= game.stableSize;
     if (benched) {
       game.bench.push(horse);
@@ -2076,9 +2011,9 @@
   let __cardSilent = false;
   function breed(fatherId, motherId) {
     if (game.subPhase !== 'breeding') return null;
-    // 只看 active roster — bench 馬不能交配（沒參賽）
-    const father = game.horses.find(h => h.id === fatherId);
-    const mother = game.horses.find(h => h.id === motherId);
+    const allBreedable = [...game.horses, ...game.bench];
+    const father = allBreedable.find(h => h.id === fatherId);
+    const mother = allBreedable.find(h => h.id === motherId);
     if (!father || !mother) return null;
     if (father.age < 1 || father.age > 4 || mother.age < 1 || mother.age > 4) return null;
     if (father.gender !== 'male' || mother.gender !== 'female') return null;
@@ -2182,7 +2117,7 @@
       const alreadyRaced = game.horses.filter(x => x.racedThisTurn).length;
       if (alreadyRaced >= 2) return;
     }
-    const raceType = pick(RACE_TYPES);
+    const raceType = game.currentRace || pick(RACE_TYPES);
     const enemy = makeEnemy();
     const variance = () => 0.8 + Math.random() * 0.4;
     const traitMult = applyTraitMultiplier(h, raceType.attr, raceType.terrain);
@@ -2285,8 +2220,9 @@
   function getSmartBreedPairs() {
     const breedAge = h => h.age >= 1 && h.age <= 4;
     const eligible = h => breedAge(h) && h.racedThisTurn;
-    const malePool = game.horses.filter(h => eligible(h) && h.gender === 'male' && !h.bredThisTurn);
-    const eligibleFemales = game.horses
+    const allBreedable = [...game.horses, ...game.bench];
+    const malePool = allBreedable.filter(h => eligible(h) && h.gender === 'male' && !h.bredThisTurn);
+    const eligibleFemales = allBreedable
       .filter(h => eligible(h) && h.gender === 'female')
       .sort((a, b) => ovrOf(b) - ovrOf(a));
     if (!malePool.length || !eligibleFemales.length) return [];
@@ -2511,6 +2447,33 @@
       phaseBanner.style.display = 'none';
     }
 
+    const venueCard = document.getElementById('race-venue-card');
+    if (game.currentRace && game.yearsElapsed > 0 && game.yearsElapsed < game.maxYears + 1) {
+      const r = game.currentRace;
+      venueCard.style.display = 'block';
+      document.getElementById('venue-name').textContent = r.name;
+      const attrEl = document.getElementById('venue-attr');
+      attrEl.textContent = ATTR_LABEL[r.attr] || r.attr;
+      attrEl.className = 'attr-badge attr-' + r.attr;
+      document.getElementById('venue-terrain').textContent = r.terrain;
+      const hintMap = {
+        Fire: '帶 B01 蹄炎 +8%',
+        Ice:  '帶 B02 冰晶體質 +8%',
+        Sand: '帶 B03 沙漠之子 +8%',
+      };
+      const terrainHintMap = {
+        '爬山':     '帶 B04 鐵蹄 +10%',
+        '長平原':   '帶 B05 疾風步 +10%',
+        '起伏不定': '帶 B06 起伏直覺 +10%',
+      };
+      const hints = [hintMap[r.attr], terrainHintMap[r.terrain]].filter(Boolean);
+      const hintEl = document.getElementById('venue-hint');
+      hintEl.textContent = hints.length ? '相性：' + hints.join(' · ') : '';
+      hintEl.style.display = hints.length ? 'block' : 'none';
+    } else {
+      venueCard.style.display = 'none';
+    }
+
     // Body class for phase lock
     document.body.classList.remove('subphase-event','subphase-roster','subphase-racing','subphase-breeding','phase-end','phase-init');
     if (game.yearsElapsed >= game.maxYears) {
@@ -2555,26 +2518,34 @@
       `).join('');
     }
 
-    // 育種：只看 active roster + 當年參賽過 + 年齡 1–4
+    // 育種：active + bench，當年參賽過 + 年齡 1–4
     const breedAge = h => h.age >= 1 && h.age <= 4;
     const breedEligible = h => breedAge(h) && h.racedThisTurn;
-    const males   = game.horses.filter(h => breedEligible(h) && h.gender === 'male');
-    const females = game.horses.filter(h => breedEligible(h) && h.gender === 'female');
-    if (!males.find(h => h.id === game.breedFatherId)) game.breedFatherId = null;
-    const selF = females.find(h => h.id === game.breedMotherId);
-    if (!selF) game.breedMotherId = null;
+    const allBreedable = [...game.horses, ...game.bench];
+    const allEligible = allBreedable.filter(breedEligible);
+    // 清除失效的選擇
+    if (!allEligible.find(h => h.id === game.breedPrimaryId)) game.breedPrimaryId = null;
+    if (game.breedPrimaryId === null) game.breedSecondaryId = null;
+    const primary = allEligible.find(h => h.id === game.breedPrimaryId) || null;
+    const oppositeGender = primary ? (primary.gender === 'male' ? 'female' : 'male') : null;
+    const secondaryPool = oppositeGender ? allEligible.filter(h => h.gender === oppositeGender) : [];
+    if (!secondaryPool.find(h => h.id === game.breedSecondaryId)) game.breedSecondaryId = null;
+    const secondary = secondaryPool.find(h => h.id === game.breedSecondaryId) || null;
+    const father = primary?.gender === 'male' ? primary : secondary;
+    const mother = primary?.gender === 'female' ? primary : secondary;
 
-    const cardHtml = (h, role) => {
-      const sel = (role === 'male' ? game.breedFatherId : game.breedMotherId) === h.id;
-      // 公馬：1 胎/年；母馬：無限制
-      const disabled = role === 'male' && h.bredThisTurn;
-      const cls = `breed-card${sel ? ' selected' : ''}${disabled ? ' disabled' : ''}`;
-      const ageTag = disabled ? '已配' : `${h.age}歲`;
+    const breedCardHtml = (h, isPrimary) => {
+      const sel = isPrimary ? game.breedPrimaryId === h.id : game.breedSecondaryId === h.id;
+      const disabled = !isPrimary && false; // secondary pool already filtered; primary: disable if male already bred
+      const disabledPrimary = h.gender === 'male' && h.bredThisTurn;
+      const cls = `breed-card${sel ? ' selected' : ''}${disabledPrimary ? ' disabled' : ''}`;
+      const ageTag = disabledPrimary ? '已配' : `${h.age}歲`;
+      const benchTag = game.bench.some(b => b.id === h.id) ? ` <span style="opacity:.5;font-size:9px">替補</span>` : '';
       return `
-        <div class="${cls}" data-bid="${h.id}" data-role="${role}">
+        <div class="${cls}" data-bid="${h.id}" data-step="${isPrimary ? 'primary' : 'secondary'}">
           <div class="breed-card-main">
-            <div class="breed-card-name">${h.name}${h.skill ? ` <span class="skill-badge">${h.skill.name}</span>` : ''}</div>
-            <div class="breed-card-stats">速${h.speed}・力${h.power}・體${h.stamina}</div>
+            <div class="breed-card-name">${h.name}${h.skill ? ` <span class="skill-badge">${h.skill.name}</span>` : ''}${benchTag}</div>
+            <div class="breed-card-stats">速${h.speed}・力${h.power}・體${h.stamina}・<span class="${h.gender}">${h.gender === 'male' ? '公' : '母'}</span></div>
           </div>
           <div style="text-align:right">
             <div class="breed-card-ovr">${ovrOf(h)}</div>
@@ -2582,21 +2553,38 @@
           </div>
         </div>`;
     };
-    const maleListEl   = document.getElementById('breed-male-list');
-    const femaleListEl = document.getElementById('breed-female-list');
-    maleListEl.innerHTML   = males.length   ? males.map(h => cardHtml(h, 'male')).join('')     : `<div class="breed-empty">無已參賽公馬（須當年完賽）</div>`;
-    femaleListEl.innerHTML = females.length ? females.map(h => cardHtml(h, 'female')).join('') : `<div class="breed-empty">無已參賽母馬（須當年完賽）</div>`;
+
+    const primaryListEl   = document.getElementById('breed-primary-list');
+    const secondaryListEl = document.getElementById('breed-secondary-list');
+    const step2El = document.getElementById('breed-step2');
+    const step2Title = document.getElementById('breed-step2-title');
+    // 第一步：所有已完賽可交配馬匹
+    const primaryCandidates = allEligible.filter(h => !(h.gender === 'male' && h.bredThisTurn));
+    primaryListEl.innerHTML = primaryCandidates.length
+      ? primaryCandidates.map(h => breedCardHtml(h, true)).join('')
+      : `<div class="breed-empty">無已完賽馬匹可交配</div>`;
+    // 第二步：選定第一匹後才啟用
+    if (!primary) {
+      step2El.style.opacity = '0.35';
+      step2El.style.pointerEvents = 'none';
+      step2Title.textContent = '選擇配對對象';
+      secondaryListEl.innerHTML = `<div class="breed-empty">請先選擇第一匹馬</div>`;
+    } else {
+      step2El.style.opacity = '';
+      step2El.style.pointerEvents = '';
+      step2Title.textContent = `配對對象（${primary.gender === 'male' ? '母馬' : '公馬'}）`;
+      secondaryListEl.innerHTML = secondaryPool.length
+        ? secondaryPool.map(h => breedCardHtml(h, false)).join('')
+        : `<div class="breed-empty">無已完賽${primary.gender === 'male' ? '母馬' : '公馬'}</div>`;
+    }
 
     const breedBtnEl = document.getElementById('breed-btn');
-    const father = males.find(h => h.id === game.breedFatherId && !h.bredThisTurn);
-    const mother = females.find(h => h.id === game.breedMotherId);
     const pairEl = document.getElementById('breed-pair-display');
     pairEl.innerHTML = (father && mother)
       ? `<span class="pair-name">${father.name}</span><span class="pair-x">×</span><span class="pair-name">${mother.name}</span>`
-      : `<span style="opacity:.5">— 各選一隻公母即可看博士建言 —</span>`;
+      : `<span style="opacity:.5">— 先選第一匹，再選配對對象 —</span>`;
     breedBtnEl.disabled = !(father && mother);
-    const fertileMales = males.filter(h => !h.bredThisTurn);
-    document.getElementById('breed-all-btn').disabled = !fertileMales.length || !females.length;
+    document.getElementById('breed-all-btn').disabled = !smartPairs.length;
     document.getElementById('breed-all-btn').textContent = smartPairs.length ? `智能交配 (${smartPairs.length})` : '智能交配';
 
     const vetBlock = document.getElementById('vet-advice-block');
@@ -2758,29 +2746,6 @@
     const rosterBtn = document.getElementById('advance-roster-btn');
     if (rosterBtn) rosterBtn.disabled = game.subPhase !== 'roster';
 
-    const soulListEl = document.getElementById('soul-list');
-    if (!game.souls.length) {
-      soulListEl.innerHTML = `<div class="empty">靈魂區空無一物。</div>`;
-    } else {
-      const champId = game.ragnarok && game.ragnarok.champion ? game.ragnarok.champion.id : null;
-      const sortedSouls = [...game.souls].sort((a, b) => ovrOf(b) - ovrOf(a));
-      soulListEl.innerHTML = sortedSouls.map(s => {
-        const sRarity = (typeof window.rarityOf === 'function') ? window.rarityOf(s).id : '';
-        return `
-        <div class="soul-card ${s.id === champId ? 'soul-champion' : ''}" data-id="${s.id}"${sRarity ? ` data-rarity="${sRarity}"` : ''}>
-          <div class="horse-info">
-            <div class="horse-name-row">
-              <span class="soul-name">${s.name}</span>
-              <span class="gender ${s.gender}">${s.gender === 'male' ? '公' : '母'}</span>
-              ${s.skill ? `<span class="skill-badge">${s.skill.name}</span>` : ''}
-            </div>
-          </div>
-          <span class="soul-ovr">OVR ${ovrOf(s)}</span>
-        </div>
-      `;
-      }).join('');
-    }
-
     const logEl = document.getElementById('log');
     logEl.innerHTML = game.log
       .map(l => `<div class="log-entry ${l.kind}">› ${l.text}</div>`)
@@ -2890,15 +2855,6 @@
 
   document.getElementById('fab-next').addEventListener('click', nextTurn);
   document.getElementById('fab-omni').addEventListener('click', runOmniAction);
-  function toggleSoulPanel() {
-    const panel = document.getElementById('soul-panel');
-    const backdrop = document.getElementById('soul-backdrop');
-    const isOpen = panel.classList.toggle('open');
-    backdrop.classList.toggle('active', isOpen);
-  }
-  document.getElementById('soul-panel-tab').addEventListener('click', toggleSoulPanel);
-  document.getElementById('soul-fab').addEventListener('click', toggleSoulPanel);
-  document.getElementById('soul-backdrop').addEventListener('click', toggleSoulPanel);
   document.getElementById('next-turn').addEventListener('click', nextTurn);
   document.getElementById('info-toggle').addEventListener('click', () => {
     game.infoDrawerOpen = !game.infoDrawerOpen;
@@ -2938,22 +2894,28 @@
   function handleBreedListClick(e) {
     const card = e.target.closest('.breed-card');
     if (!card || card.classList.contains('disabled')) return;
-    const role = card.dataset.role;
     const id = card.dataset.bid;
-    if (role === 'male') {
-      game.breedFatherId = (game.breedFatherId === id) ? null : id;
-    } else {
-      game.breedMotherId = (game.breedMotherId === id) ? null : id;
+    const step = card.dataset.step;
+    if (step === 'primary') {
+      game.breedPrimaryId = (game.breedPrimaryId === id) ? null : id;
+      if (!game.breedPrimaryId) game.breedSecondaryId = null;
+    } else if (step === 'secondary') {
+      game.breedSecondaryId = (game.breedSecondaryId === id) ? null : id;
     }
     render();
   }
-  document.getElementById('breed-male-list').addEventListener('click', handleBreedListClick);
-  document.getElementById('breed-female-list').addEventListener('click', handleBreedListClick);
+  document.getElementById('breed-primary-list').addEventListener('click', handleBreedListClick);
+  document.getElementById('breed-secondary-list').addEventListener('click', handleBreedListClick);
 
   document.getElementById('breed-btn').addEventListener('click', () => {
-    if (!game.breedFatherId || !game.breedMotherId) return;
-    breed(game.breedFatherId, game.breedMotherId);
-    game.breedMotherId = null;
+    const allBreedable = [...game.horses, ...game.bench];
+    const primary = allBreedable.find(h => h.id === game.breedPrimaryId);
+    const secondary = allBreedable.find(h => h.id === game.breedSecondaryId);
+    if (!primary || !secondary) return;
+    const fatherId = primary.gender === 'male' ? primary.id : secondary.id;
+    const motherId = primary.gender === 'female' ? primary.id : secondary.id;
+    breed(fatherId, motherId);
+    game.breedSecondaryId = null; // 清除配對對象；保留第一匹方便連配
   });
   document.getElementById('breed-all-btn').addEventListener('click', breedAll);
 
