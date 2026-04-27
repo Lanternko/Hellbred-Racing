@@ -33,7 +33,7 @@ Stage A + B + C + D + 命名系統 + 卡片系統已實作。**Stage E**（替�
 - **B**：靈魂區 / Ragnarök / 大典 / 技能 / 一鍵掃蕩
 - **C**：特性系統（藍/紅/金）/ 獸醫建言 / 馬匹清單 modal
 - **D**：6-turn cycle / 馬廄 fix size / 金幣 down-scale / 印記
-- **E**：active/bench 分離 / 「參賽過才能交配」/ 公馬一胎/年 / subPhase / 千年→年
+- **E**：active/bench 分離 / 「主動方需參賽，被選方無限制」/ 公馬主動限 1 胎/年 / subPhase / 千年→年
 - **命名/卡片**：6 風格姓名（強者姓 / 弱者 origin / 英文姓後置）+ 6 段稀有度 + 翻牌驚喜 + 卡片 rarity tint
 
 **設計哲學**：特性決定方向，數值決定下限。資訊 B方案（部分遮蔽）— 隱性僅顯示「血統中潛藏不詳因子」。
@@ -44,7 +44,7 @@ Stage A + B + C + D + 命名系統 + 卡片系統已實作。**Stage E**（替�
 
 **Stage D**（6-turn cycle）：T6/12/18/24/30 大典；T3/9/15/21/27 小賽事；其餘活動。馬廄 6→11；金幣 ÷100；印記 2 枚（無瑕之眼 M01 / 戰神血脈 M02）。`marks: [], marksRecessive: []`
 
-**Stage E**（替補席 + Phase Lock）：active/bench 拆分；subPhase roster→racing→breeding；雙親當年完賽才可交配；公馬一胎/年；新買/新生本年凍結；命名平民化（千年→年）。
+**Stage E**（替補席 + Phase Lock）：active/bench 拆分；subPhase roster→racing→breeding；主動方當年完賽才可交配，被選方無限制；公馬作為主動方限 1 胎/年；新買/新生本年凍結；命名平民化（千年→年）。
 
 ## Next actions
 - [x] Stage A / B / C / D + 卡片系統已完成（最近：D commit `f269baa`，卡片 `fa67635`）
@@ -75,8 +75,8 @@ Stage A + B + C + D + 命名系統 + 卡片系統已實作。**Stage E**（替�
 - **active roster 硬上限**：`game.horses.length ≤ game.stableSize`。滿時新買 / 新生馬自動進 `game.bench`，bench 無上限。
 - **6-turn cycle 不可變**：T6/12/18/24/30 必為大典；T3/9/15/21/27 必為小賽事；其餘 turn 為活動 turn。
 - **印記每馬最多 1 枚**：取得新印記時若已有印記，舊印記不被覆蓋（可遺傳但本馬不再吃新印記）。冠軍若已滿則跳過獎勵。
-- **交配前提**：雙親 `racedThisTurn === true`（必須當年完賽）。bench 馬不可交配。
-- **公馬一胎/年**：`father.bredThisTurn` 觸發即拒絕；母馬無此限制。
+- **交配前提**：**主動方**（primary）`racedThisTurn === true` 必須當年完賽。**被選方**（secondary）無限制：替補、未參賽、已配皆可。
+- **公馬一胎/年（主動限制）**：公馬作為主動方時 `father.bredThisTurn` 觸發即拒絕；作為被選方時不受限。母馬無胎次限制。
 - **subPhase 推進不可逆**：`roster → racing → breeding`；「下一年」按鈕僅在 breeding 或 event-modal-resolved 時可按。
 
 ## NEVER
