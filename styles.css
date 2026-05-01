@@ -1,0 +1,1244 @@
+  :root {
+    /* Lospec Resurrect-64（精選 13 色） — 後續 Step 2/3 禁止再寫裸 hex，只用語意別名或 --c-N */
+    --c-0:  #2e222f;
+    --c-1:  #3e3546;
+    --c-2:  #625565;
+    --c-3:  #966c6c;
+    --c-4:  #ab947a;
+    --c-5:  #8b9bb4;
+    --c-6:  #c0cbdc;
+    --c-7:  #f2ae99;
+    --c-8:  #ad2f45;
+    --c-9:  #ea4f36;
+    --c-10: #f9c22b;
+    --c-11: #e8c170;
+    --c-12: #3ca370;
+
+    /* 語意別名 */
+    --bg: var(--c-0);
+    --bg-card: var(--c-1);
+    --border: var(--c-2);
+    --text: var(--c-6);
+    --text-dim: var(--c-5);
+    --accent: var(--c-8);
+    --accent-hover: var(--c-9);
+    --gold: var(--c-10);
+    --foal: var(--c-3);
+    --peak: var(--c-12);
+    --retired: var(--c-11);
+    --male: var(--c-5);
+    --female: var(--c-7);
+
+    /* Design tokens — Step 2/3 直接套用，禁止再寫 magic shadow */
+    --raise: inset 0 -3px 0 rgba(0,0,0,.35);
+    --raise-sm: inset 0 -2px 0 rgba(0,0,0,.3);
+    --drop: 0 2px 0 rgba(0,0,0,.4);
+    --drop-lg: 0 3px 0 rgba(0,0,0,.5);
+    --ease-snap: cubic-bezier(.36,.07,.19,.97);
+
+    /* Typography */
+    --font-mono: 'VT323', ui-monospace, 'SF Mono', 'PingFang TC', 'Noto Sans TC', monospace;
+    --font-body: 'PingFang TC', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    padding: 32px 24px;
+    line-height: 1.5;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 920px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 0.18em;
+    text-shadow: 2px 2px 0 rgba(0,0,0,.6);
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+  }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 18px 22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    box-shadow: var(--raise-sm), var(--drop);
+  }
+  .stat { display: flex; flex-direction: column; gap: 4px; }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.4em;
+    padding-left: 2px;
+  }
+  .stat-value {
+    font-family: var(--font-mono);
+    font-size: 32px;
+    line-height: 1;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+  .stat-value.gold { color: var(--gold); }
+  .stat-sub {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--text-dim);
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  button.primary {
+    margin-left: auto;
+    padding: 13px 24px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid var(--c-9);
+    border-radius: 4px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    transition: background 0.15s var(--ease-snap),
+                transform 0.08s var(--ease-snap),
+                box-shadow 0.08s var(--ease-snap);
+    box-shadow: var(--raise), var(--drop-lg);
+  }
+  button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+  button.primary:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: var(--raise-sm), 0 1px 0 rgba(0,0,0,.5);
+  }
+  button.primary:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    cursor: not-allowed;
+    color: var(--text-dim);
+    box-shadow: var(--raise-sm);
+  }
+
+  .section-title {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.4em;
+    margin-bottom: 12px;
+    padding-left: 2px;
+  }
+
+  .horse-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .horse-list > .empty { grid-column: 1 / -1; }
+  .horse-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: var(--raise-sm), var(--drop);
+  }
+  .horse-info { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .horse-name-row { display: flex; align-items: center; gap: 12px; }
+  .horse-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+  .gender {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    background: rgba(0,0,0,.35);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    box-shadow: var(--raise-sm);
+  }
+  .gender.male { color: var(--male); }
+  .gender.female { color: var(--female); }
+
+  .stats-row {
+    display: flex;
+    gap: 22px;
+    align-items: baseline;
+  }
+  .stat-pill {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+  }
+  .stat-pill strong {
+    font-family: var(--font-mono);
+    font-size: 19px;
+    color: var(--text);
+    font-weight: 400;
+    margin-left: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .horse-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .age {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--text);
+  }
+  .status {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    letter-spacing: 0.25em;
+    font-weight: 700;
+    box-shadow: var(--raise-sm);
+  }
+  .status.foal { background: var(--foal); color: var(--c-0); }
+  .status.peak { background: var(--peak); color: var(--c-0); }
+  .status.retired { background: var(--retired); color: var(--c-0); }
+
+  .empty {
+    padding: 36px;
+    text-align: center;
+    color: var(--text-dim);
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+  }
+
+  .log {
+    margin-top: 20px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--text-dim);
+    max-height: 180px;
+    overflow-y: auto;
+    box-shadow: var(--raise-sm);
+    line-height: 1.4;
+  }
+  .log-entry { padding: 1px 0; }
+  .log-entry.death { color: var(--accent-hover); }
+
+  .info-toggle-wrap {
+    margin: 22px 0 18px;
+  }
+  .info-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: rgba(0,0,0,.18);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    box-shadow: var(--raise-sm), var(--drop);
+    transition: border-color 0.12s var(--ease-snap),
+                background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap);
+  }
+  .info-toggle:hover {
+    border-color: var(--text-dim);
+    background: rgba(0,0,0,.28);
+  }
+  .info-toggle:active {
+    transform: translateY(2px);
+    box-shadow: var(--raise-sm);
+  }
+  .info-toggle.open {
+    border-color: var(--c-5);
+    background: rgba(139,155,180,.12);
+  }
+  .info-toggle-icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.22);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 6px;
+  }
+  .info-toggle-icon span {
+    border: 2px solid rgba(255,255,255,.85);
+    border-radius: 2px;
+  }
+  .info-toggle-copy {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .info-toggle-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    color: var(--text-dim);
+  }
+  .info-toggle-sub {
+    font-size: 12px;
+    color: var(--text);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .info-toggle-state {
+    font-size: 11px;
+    color: var(--c-5);
+    letter-spacing: 0.25em;
+    white-space: nowrap;
+  }
+  .info-drawer {
+    display: none;
+    margin-bottom: 24px;
+    padding: 18px;
+    background: rgba(62,53,70,.45);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: var(--raise-sm), var(--drop);
+  }
+  .info-drawer.open {
+    display: block;
+    animation: info-drawer-open 0.18s ease;
+  }
+  @keyframes info-drawer-open {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .info-drawer-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .info-drawer .log {
+    margin-top: 0;
+  }
+
+  /* 賽事播報 */
+  .race-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+  .race-empty {
+    padding: 18px;
+    text-align: center;
+    color: var(--text-dim);
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+  .race-entry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left-width: 3px;
+    border-radius: 4px;
+    align-items: baseline;
+    box-shadow: var(--raise-sm);
+  }
+  .race-entry.win { border-left-color: var(--peak); }
+  .race-entry.loss { border-left-color: var(--accent); }
+  .race-year {
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+  .race-matchup {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 17px;
+    color: var(--text);
+    min-width: 0;
+  }
+  .race-matchup .player { color: var(--gold); font-weight: 700; }
+  .race-matchup .enemy { color: var(--text-dim); }
+  .race-matchup .score {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+  .race-matchup .vs {
+    color: var(--text-dim);
+    margin: 0 8px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    font-family: var(--font-body);
+  }
+  .race-verdict {
+    font-size: 11px;
+    padding: 3px 12px;
+    border-radius: 2px;
+    letter-spacing: 0.3em;
+    font-weight: 700;
+    box-shadow: var(--raise-sm);
+  }
+  .race-verdict.win { background: var(--peak); color: var(--c-0); }
+  .race-verdict.loss { background: var(--accent); color: #fff; }
+  .race-reward {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .race-reward.win { color: var(--gold); }
+  .race-reward.loss { color: var(--text-dim); }
+
+  .race-btn {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 9px 14px 11px;
+    background: var(--gold);
+    color: var(--c-0);
+    border: 1px solid var(--c-11);
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    transition: background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap),
+                box-shadow 0.08s var(--ease-snap);
+    box-shadow: var(--raise-sm), var(--drop);
+    white-space: nowrap;
+  }
+  .race-btn:hover:not(:disabled) { background: var(--c-11); }
+  .race-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.3);
+  }
+  .race-btn:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: var(--raise-sm);
+  }
+
+  /* 黑市 */
+  .market-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .market-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--c-3);
+    border-radius: 4px;
+    box-shadow: var(--raise-sm), var(--drop);
+  }
+  .market-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+    min-width: 80px;
+  }
+  .price {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    color: var(--gold);
+    font-weight: 700;
+    line-height: 1;
+  }
+  .buy-btn {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 9px 14px 11px;
+    background: var(--c-9);
+    color: #fff;
+    border: 1px solid var(--c-9);
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    transition: background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap),
+                box-shadow 0.08s var(--ease-snap);
+    box-shadow: var(--raise-sm), var(--drop);
+    white-space: nowrap;
+  }
+  .buy-btn:hover:not(:disabled) { filter: brightness(1.1); }
+  .buy-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.3);
+  }
+  .buy-btn:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: var(--raise-sm);
+  }
+
+  /* 交配所 */
+  .breeding-panel {
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: var(--raise-sm), var(--drop);
+    margin-bottom: 24px;
+  }
+  .breed-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .breed-col-title {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .breed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .breed-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,.2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s;
+    user-select: none;
+  }
+  .breed-card:hover:not(.disabled):not(.selected) {
+    border-color: var(--text-dim);
+    background: rgba(0,0,0,.35);
+  }
+  .breed-card.selected {
+    border-color: var(--accent);
+    background: rgba(173,47,69,.18);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+  }
+  .breed-card.disabled { opacity: 0.4; cursor: not-allowed; }
+  .breed-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .breed-card-name {
+    font-size: 13px; font-weight: 700;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .breed-card-stats {
+    font-size: 10px; color: var(--text-dim); font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+  }
+  .breed-card-ovr {
+    font-family: var(--font-mono); font-size: 16px; color: var(--gold);
+    font-weight: 700; line-height: 1; white-space: nowrap;
+  }
+  .breed-card-age { font-size: 9px; color: var(--text-dim); letter-spacing: 0.1em; }
+  .breed-empty {
+    padding: 24px 12px; text-align: center; color: var(--text-dim);
+    font-size: 12px; font-style: italic;
+    border: 1px dashed var(--border); border-radius: 4px;
+  }
+  .breed-pair-display {
+    text-align: center; font-size: 12px; color: var(--text-dim);
+    margin: 8px 0; letter-spacing: 0.04em; min-height: 18px;
+  }
+  .breed-pair-display .pair-name { color: var(--text); font-weight: 700; }
+  .breed-pair-display .pair-x { margin: 0 8px; color: var(--accent); font-family: var(--font-mono); }
+  .breed-actions {
+    display: flex; gap: 10px; justify-content: center; margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .breed-btn {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 11px 18px 13px;
+    background: var(--c-7);
+    color: var(--c-0);
+    border: 1px solid var(--c-7);
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    transition: background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap),
+                box-shadow 0.08s var(--ease-snap);
+    box-shadow: var(--raise-sm), var(--drop);
+    white-space: nowrap;
+  }
+  .breed-btn:hover:not(:disabled) { filter: brightness(1.1); }
+  .breed-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.3);
+  }
+  .breed-btn:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: var(--raise-sm);
+  }
+
+  /* OVR / 突變視覺 / 馬廄折疊 */
+  .ovr {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    color: var(--gold);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
+  .stat-pill.mut strong { color: var(--accent-hover); }
+  .stat-pill.mut { color: var(--accent-hover); }
+  .stable-toggle {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    cursor: pointer;
+    text-align: center;
+    font-family: var(--font-body);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    font-weight: 600;
+    transition: border-color 0.12s var(--ease-snap),
+                color 0.12s var(--ease-snap),
+                background 0.12s var(--ease-snap);
+  }
+  .stable-toggle:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+    background: rgba(0,0,0,.15);
+  }
+
+  /* 馬廄標題列（含全員出戰按鈕） */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-header .section-title { margin-bottom: 0; }
+  .all-race-btn {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 8px 14px 10px;
+    background: var(--gold);
+    color: var(--c-0);
+    border: 1px solid var(--c-11);
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 0.15em;
+    transition: background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap),
+                box-shadow 0.08s var(--ease-snap);
+    box-shadow: var(--raise-sm), var(--drop);
+    white-space: nowrap;
+  }
+  .all-race-btn:hover:not(:disabled) { background: var(--c-11); }
+  .all-race-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.3);
+  }
+  .all-race-btn:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+    box-shadow: var(--raise-sm);
+  }
+
+  /* 賽道預告卡 */
+  .race-venue-card {
+    padding: 10px 14px 12px;
+    background: rgba(20, 22, 28, 0.55);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  .race-venue-card .venue-label {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .race-venue-card .venue-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .race-venue-card .venue-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.1em;
+  }
+  .race-venue-card .venue-badges { display: inline-flex; gap: 4px; }
+  .race-venue-card .venue-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    letter-spacing: 0.05em;
+  }
+  body.subphase-event #race-venue-card,
+  body.subphase-breeding #race-venue-card,
+  body.phase-end #race-venue-card,
+  body.phase-init #race-venue-card { display: none !important; }
+
+  /* 大典橫幅 */
+  .major-event-banner {
+    padding: 10px 18px;
+    background: rgba(249,194,43,.1);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    color: var(--gold);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .race-entry.major { border-left-color: var(--c-5); }
+
+  /* 技能徽章 */
+  .skill-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    background: rgba(139,155,180,.2);
+    color: var(--c-5);
+    border: 1px solid var(--c-5);
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* 特性徽章 */
+  .trait-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    cursor: default;
+    white-space: nowrap;
+    box-shadow: var(--raise-sm);
+  }
+  .trait-badge.blue { background: rgba(139,155,180,.2); border: 1px solid var(--c-5); color: var(--c-6); }
+  .trait-badge.red  { background: rgba(173,47,69,.2);   border: 1px solid var(--accent); color: var(--c-7); }
+  .trait-badge.gold { background: rgba(249,194,43,.15); border: 1px solid var(--gold);   color: var(--gold);
+                      box-shadow: var(--raise-sm), 0 0 6px rgba(249,194,43,.3); }
+  .trait-badge[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    color: var(--text);
+    pointer-events: none;
+    z-index: 50;
+    box-shadow: var(--drop-lg);
+  }
+  .trait-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; align-items: center; }
+  .trait-warning { font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em; font-style: italic; }
+
+  /* 獸醫建言 */
+  .vet-advice {
+    width: 100%;
+    background: rgba(0,0,0,.25);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-top: 2px;
+  }
+  .vet-name { font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 5px; }
+  .vet-text { font-size: 12px; line-height: 1.7; color: var(--text-dim); font-style: italic; }
+  .vet-advice.sev-high   { border-color: rgba(173,47,69,.4); }
+  .vet-advice.sev-high   .vet-text { color: var(--c-7); }
+  .vet-advice.sev-medium { border-color: rgba(234,79,54,.3); }
+  .vet-advice.sev-medium .vet-text { color: var(--c-7); opacity: 0.85; }
+  .vet-advice.sev-gold   { border-color: rgba(249,194,43,.4); }
+  .vet-advice.sev-gold   .vet-text { color: var(--gold); }
+
+  /* 馬匹清單 Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 300;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 16px;
+    overflow-y: auto;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 680px;
+    box-shadow: 0 12px 48px rgba(0,0,0,.7);
+    overflow: hidden;
+    margin: auto;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-title { font-size: 12px; font-weight: 700; letter-spacing: 0.3em; color: var(--text-dim); }
+  .modal-close {
+    background: transparent; border: none; color: var(--text-dim);
+    font-size: 18px; cursor: pointer; padding: 2px 8px; border-radius: 2px; line-height: 1;
+  }
+  .modal-close:hover { color: var(--text); background: rgba(255,255,255,.08); }
+  .modal-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .modal-tab {
+    padding: 10px 18px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.15em;
+    color: var(--text-dim); background: transparent;
+    border: none; border-bottom: 2px solid transparent;
+    cursor: pointer; transition: color 0.12s;
+  }
+  .modal-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .modal-tab:hover:not(.active) { color: var(--text); }
+  .modal-body { padding: 16px 20px; max-height: 60vh; overflow-y: auto; }
+  .modal-horse-list { display: flex; flex-direction: column; gap: 8px; }
+  .modal-horse-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 14px;
+    background: rgba(0,0,0,.2);
+    border: 1px solid var(--border); border-radius: 4px;
+  }
+  .modal-horse-info { flex: 1; min-width: 0; }
+  .modal-horse-name { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .modal-horse-sub  { font-size: 11px; color: var(--text-dim); margin-top: 3px; letter-spacing: 0.04em; }
+  .modal-horse-ovr  { font-family: var(--font-mono); font-size: 20px; color: var(--gold); line-height: 1; white-space: nowrap; }
+  .modal-empty { padding: 28px; text-align: center; color: var(--text-dim); font-size: 13px; }
+
+  /* Stage D — 活動 / 印記 三選一 */
+  .choice-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .choice-card {
+    background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 4px;
+    padding: 16px 12px; cursor: pointer; transition: all 0.15s;
+    display: flex; flex-direction: column; gap: 8px; min-height: 140px;
+  }
+  .choice-card:hover { border-color: var(--accent); background: rgba(255,255,255,.04); transform: translateY(-2px); }
+  .choice-card-title { font-size: 14px; font-weight: 700; letter-spacing: 0.1em; color: var(--gold); }
+  .choice-card-kind {
+    font-size: 10px; letter-spacing: 0.2em; color: var(--text-dim);
+    border: 1px solid var(--border); padding: 2px 6px; border-radius: 2px;
+    align-self: flex-start; text-transform: uppercase;
+  }
+  .choice-card-desc { font-size: 12px; color: var(--text); line-height: 1.5; }
+  .choice-card-target { font-size: 11px; color: var(--text-dim); margin-top: auto; font-style: italic; }
+  @media (max-width: 600px) {
+    .choice-cards { grid-template-columns: 1fr; }
+  }
+
+  /* Stage D — 印記 badge */
+  .mark-badge {
+    font-size: 10px; padding: 2px 6px; border-radius: 2px;
+    background: linear-gradient(135deg, #b8932f, #f0c75e);
+    color: #0d0e12; font-weight: 700; letter-spacing: 0.1em;
+    border: 1px solid #d4a843;
+    text-shadow: 0 0 2px rgba(0,0,0,.3);
+  }
+  .stable-cap { font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em; }
+  .stable-cap.full { color: #d96666; }
+
+  /* Stage E — bench / roster swap UI */
+  .bench-section { margin-top: 18px; }
+  .bench-empty { padding: 14px; text-align: center; color: var(--text-dim); font-size: 12px; border: 1px dashed var(--border); border-radius: 4px; }
+  .roster-swap-btn {
+    background: rgba(120, 130, 160, 0.15);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px; border-radius: 3px; cursor: pointer;
+    font-size: 12px; letter-spacing: 0.1em;
+    transition: background 0.12s;
+  }
+  .roster-swap-btn:hover { background: rgba(120, 130, 160, 0.3); }
+  .roster-swap-btn.demote { color: #d4a843; }
+  .roster-swap-btn.promote { color: #82c97b; }
+  .roster-swap-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .roster-actions {
+    display: flex; justify-content: center; gap: 12px; padding: 16px 0;
+  }
+  .phase-advance-btn {
+    background: linear-gradient(135deg, #b8932f, #d4a843);
+    color: #0d0e12; border: none; padding: 12px 28px; border-radius: 4px;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.2em; cursor: pointer;
+    transition: filter 0.12s;
+  }
+  .phase-advance-btn:hover { filter: brightness(1.1); }
+  .phase-advance-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Stage E — phase lock：依 subPhase 隱藏不相干區塊 */
+  body.subphase-event #breed-section,
+  body.subphase-event #market-section,
+  body.subphase-event #roster-actions,
+  body.subphase-event .race-btn,
+  body.subphase-event #all-race-btn,
+  body.subphase-event .roster-swap-btn,
+  body.subphase-event #fab-omni { display: none !important; }
+
+  body.subphase-roster #breed-section,
+  body.subphase-roster .race-btn,
+  body.subphase-roster #all-race-btn,
+  body.subphase-roster #fab-omni { display: none !important; }
+
+  body.subphase-racing #breed-section,
+  body.subphase-racing #roster-actions,
+  body.subphase-racing .roster-swap-btn { display: none !important; }
+
+  body.subphase-breeding .race-btn,
+  body.subphase-breeding #all-race-btn,
+  body.subphase-breeding #roster-actions,
+  body.subphase-breeding .roster-swap-btn,
+  body.subphase-breeding #fab-omni { display: none !important; }
+
+  /* 結束狀態 */
+  body.phase-end #breed-section,
+  body.phase-end #market-section,
+  body.phase-end #roster-actions,
+  body.phase-end .race-btn,
+  body.phase-end #all-race-btn,
+  body.phase-end .roster-swap-btn { display: none !important; }
+
+  /* 初始狀態（year 0 開局，未啟動任何階段）*/
+  body.phase-init #breed-section,
+  body.phase-init #market-section,
+  body.phase-init #roster-actions,
+  body.phase-init .race-btn,
+  body.phase-init #all-race-btn,
+  body.phase-init .roster-swap-btn,
+  body.phase-init #fab-omni { display: none !important; }
+
+  /* Stage F — 賽事動畫覆層 */
+  .race-anim-overlay {
+    position: fixed; inset: 0;
+    background: rgba(8, 8, 20, 0.92);
+    display: none; align-items: center; justify-content: center;
+    z-index: 280;
+    backdrop-filter: blur(2px);
+  }
+  .race-anim-overlay.open { display: flex; }
+  .race-anim-box {
+    background: #0d0d1a;
+    border: 1px solid #3a3a5c;
+    border-radius: 8px;
+    padding: 20px 24px;
+    max-width: 560px; width: 92%;
+    font-family: 'Courier New', monospace;
+  }
+  .race-anim-header { color: #c8b8f8; font-size: 13px; margin-bottom: 16px; letter-spacing: .05em; }
+  .race-anim-track  { color: #e0e0ff; font-size: 13px; line-height: 1.9; margin-bottom: 12px; white-space: pre; }
+  .race-anim-events { color: #a0b0d0; font-size: 11px; min-height: 1.4em; margin-bottom: 14px; }
+  .race-anim-controls { display: flex; justify-content: space-between; align-items: center; }
+  .race-skip-btn {
+    background: transparent; border: 1px solid #4a4a6a;
+    color: #8090b0; padding: 4px 12px; border-radius: 4px;
+    cursor: pointer; font-size: 12px; font-family: monospace;
+  }
+  .race-skip-btn:hover { border-color: #8090b0; color: #c0d0e0; }
+  .anim-toggle-btn {
+    background: transparent; border: none;
+    color: #6070a0; font-size: 11px; cursor: pointer; padding: 0;
+  }
+  .anim-toggle-btn:hover { color: #a0b0d0; }
+
+  /* 馬匹清單按鈕 */
+  .roster-btn {
+    padding: 7px 14px 9px;
+    background: rgba(139,155,180,.12);
+    color: var(--c-5);
+    border: 1px solid var(--c-5);
+    border-radius: 4px;
+    font-family: var(--font-body);
+    font-size: 12px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.15em;
+    transition: background 0.12s; white-space: nowrap;
+  }
+  .roster-btn:hover { background: rgba(139,155,180,.28); }
+
+  /* Ragnarök 終局 */
+  .ragnarok-banner {
+    margin-top: 20px;
+    padding: 22px;
+    background: rgba(173,47,69,.15);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    text-align: center;
+  }
+  .ragnarok-title {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    color: var(--accent);
+    letter-spacing: 0.3em;
+    text-shadow: 2px 2px 0 rgba(0,0,0,.6);
+    margin-bottom: 10px;
+  }
+  .ragnarok-champion {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+  .ragnarok-sub { font-size: 12px; color: var(--text-dim); letter-spacing: 0.15em; }
+  .ragnarok-battles {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 14px auto 8px;
+    max-width: 520px;
+  }
+  @keyframes rag-appear {
+    from { opacity: 0; transform: translateX(-18px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .rag-rank-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 14px;
+    border-radius: 2px;
+    background: rgba(0,0,0,.2);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    animation: rag-appear 0.3s ease both;
+  }
+  .rag-rank-row.player { background: rgba(173,47,69,.25); border-left: 2px solid var(--gold); }
+  .rag-rank-row .rag-rank-num { color: var(--text-dim); min-width: 48px; text-align: left; }
+  .rag-rank-row.player .rag-rank-num { color: var(--gold); font-weight: 700; }
+  .rag-rank-row .rag-rank-name { flex: 1; text-align: left; padding-left: 8px; }
+  .rag-rank-row.player .rag-rank-name { color: var(--gold); }
+  .rag-rank-row .rag-rank-ovr { color: var(--text-dim); font-size: 13px; min-width: 60px; }
+  .rag-rank-row .rag-rank-score { color: var(--text-dim); font-size: 13px; min-width: 52px; text-align: right; }
+  .log-entry.soul { color: var(--c-5); }
+
+  /* 場地 / 屬性 badge */
+  .attr-badge, .terrain-badge {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .attr-badge.attr-Normal { background: rgba(98,85,101,.55); color: var(--c-6); }
+  .attr-badge.attr-Fire   { background: rgba(234,79,54,.22); color: var(--c-9); }
+  .attr-badge.attr-Ice    { background: rgba(139,155,180,.22); color: var(--c-5); }
+  .attr-badge.attr-Sand   { background: rgba(171,148,122,.22); color: var(--c-4); }
+  .attr-badge.attr-All    { background: rgba(249,194,43,.22); color: var(--gold); }
+  .terrain-badge { background: rgba(0,0,0,.28); color: var(--text-dim); margin-left: 3px; }
+
+  .stat-pill.boosted { color: var(--gold); }
+  .stat-pill.boosted strong { color: var(--gold); }
+
+  /* 浮動按鈕（共用基底） */
+  .fab-next, .fab-omni {
+    position: fixed;
+    z-index: 150;
+    min-width: 124px;
+    text-align: center;
+    padding: 14px 22px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid var(--c-9);
+    border-radius: 4px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.2em;
+    box-shadow: var(--raise), 0 4px 16px rgba(0,0,0,.55);
+    transition: background 0.12s var(--ease-snap),
+                transform 0.08s var(--ease-snap);
+  }
+  .fab-next { bottom: 24px; right: 24px; opacity: 1; pointer-events: auto; transition: background 0.12s var(--ease-snap), transform 0.08s var(--ease-snap), opacity 0.2s ease; }
+  .fab-next.hidden { opacity: 0; pointer-events: none; }
+  .fab-omni { bottom: 80px; right: 24px; background: var(--c-2); border-color: var(--c-2); color: var(--text-dim); }
+  .fab-omni.state-race  { background: var(--gold); border-color: var(--c-11); color: var(--c-0); }
+  .fab-omni.state-buy   { background: var(--c-9); border-color: var(--c-9); color: #fff; }
+  .fab-omni.state-breed { background: var(--c-7); border-color: var(--c-7); color: var(--c-0); }
+  .fab-omni.state-idle  { background: var(--c-2); border-color: var(--c-2); color: var(--text-dim); }
+  .fab-next:hover:not(:disabled) { background: var(--accent-hover); }
+  .fab-omni:hover:not(:disabled) { filter: brightness(1.08); }
+  .fab-next:active:not(:disabled),
+  .fab-omni:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: var(--raise-sm), 0 2px 8px rgba(0,0,0,.4);
+  }
+  .fab-next:disabled,
+  .fab-omni:disabled {
+    background: var(--c-2);
+    border-color: var(--c-2);
+    color: var(--text-dim);
+    cursor: not-allowed;
+  }
+
+  /* 行動版 (≤600px)：放大字級避免手機讀不到 */
+  @media (max-width: 600px) {
+    body {
+      padding: 18px 14px calc(112px + env(safe-area-inset-bottom, 0px));
+      font-size: 16px;
+    }
+    h1 { font-size: 22px; letter-spacing: 0.12em; }
+    .subtitle { font-size: 11px; }
+
+    .top-bar { gap: 14px; padding: 14px 16px; }
+    .stat-value { font-size: 28px; }
+    .stat-sub { font-size: 14px; }
+    button.primary { padding: 12px 18px 14px; font-size: 13px; letter-spacing: 0.15em; }
+
+    .section-title { font-size: 12px; letter-spacing: 0.3em; }
+
+    .horse-card, .market-card { padding: 12px 14px; gap: 12px; flex-wrap: wrap; }
+    .horse-info, .market-info { min-width: 140px; }
+    .horse-name { font-size: 17px; }
+    .stats-row { gap: 14px; font-size: 13px; }
+    .stat-pill { font-size: 13px; letter-spacing: 0.08em; }
+    .stat-pill strong { font-size: 18px; }
+    .ovr { font-size: 20px; }
+    .age { font-size: 24px; }
+    .price { font-size: 20px; }
+
+    .race-btn, .buy-btn { font-size: 12px; padding: 10px 12px 12px; letter-spacing: 0.15em; }
+
+    .breeding-panel { padding: 14px; }
+    .breed-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .breed-list { max-height: 240px; }
+    .breed-card { padding: 7px 10px; gap: 8px; }
+    .breed-card-name { font-size: 12px; }
+    .breed-card-stats { font-size: 10px; }
+    .breed-card-ovr { font-size: 14px; }
+    .breed-btn { font-size: 13px; padding: 12px 16px 14px; }
+    .info-toggle { padding: 11px 12px; gap: 10px; }
+    .info-toggle-icon { width: 28px; height: 28px; min-width: 28px; padding: 5px; gap: 3px; }
+    .info-toggle-title { font-size: 11px; letter-spacing: 0.2em; }
+    .info-toggle-sub { font-size: 11px; }
+    .info-toggle-state { font-size: 10px; letter-spacing: 0.15em; }
+    .info-drawer { padding: 14px; }
+
+    .race-entry { padding: 10px 14px; gap: 10px; font-size: 14px; }
+    .race-matchup { font-size: 15px; }
+    .race-reward { font-size: 16px; }
+
+    .log { font-size: 14px; padding: 12px 14px; }
+    .horse-list { grid-template-columns: 1fr; }
+    .all-race-btn { font-size: 12px; padding: 8px 12px 10px; }
+    .major-event-banner { font-size: 12px; letter-spacing: 0.15em; padding: 8px 14px; }
+    .ragnarok-title { font-size: 22px; }
+    .ragnarok-champion { font-size: 17px; }
+
+    .fab-actions {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 150;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: rgba(46,34,47,.94);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -6px 20px rgba(0,0,0,.28);
+      backdrop-filter: blur(10px);
+    }
+    .fab-next,
+    .fab-omni {
+      position: static;
+      min-width: 0;
+      width: 100%;
+      padding: 13px 14px 15px;
+      box-shadow: var(--raise), var(--drop-lg);
+    }
+    .fab-next.hidden {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Compact horse card stats on narrow screens */
+    .horse-actions { flex-wrap: wrap; gap: 6px; }
+    .section-header { flex-wrap: wrap; gap: 8px; }
+  }
