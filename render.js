@@ -55,7 +55,7 @@
         `${won ? '1' : '2'}│ ${row(horse.name.slice(0,8),    tk.hPos, tk.hVel, tk.hSeg, track.length)}\n` +
         `${won ? '2' : '1'}│ ${row(opponent.name.slice(0,8), tk.ePos, tk.eVel, tk.eSeg, track.length)}`;
       skipBtn.onclick = null;
-      setTimeout(() => { overlay.classList.remove('open'); onComplete(); }, 700);
+      setTimeout(() => { overlay.classList.remove('open'); onComplete(); }, 400);
     }
 
     skipBtn.onclick = () => {
@@ -70,7 +70,7 @@
       tickIdx++;
       if (tickIdx >= timeline.length) { finish(); return; }
       frame();
-    }, 100);
+    }, 60);
   }
 
   function render() {

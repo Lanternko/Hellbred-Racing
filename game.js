@@ -745,13 +745,7 @@
     // === 玩家馬 ===
     const hasR04 = horse.traits?.displayed.some(t => t.id === 'R04');
     const hasR03 = isMajor && horse.traits?.displayed.some(t => t.id === 'R03');
-    const hasG05 = !hasR04 && horse.traits?.displayed.some(t => t.id === 'G05');
     const traitMul = hasR04 ? 1.0 : applyTraitMultiplier(horse, raceType.attr, raceType.terrain);
-    const r12Mul = (() => {
-      if (hasR04 || !horse.traits?.displayed.some(t => t.id === 'R12')) return 1.0;
-      const maxOvr = Math.max(...game.horses.map(ovrOf));
-      return ovrOf(horse) >= maxOvr ? 1.10 : 0.90;
-    })();
     const m02   = isMajor && horse.marks?.some(m => m.id === 'M02') ? 10 : 0;
     const m01Cap = horse.marks?.some(m => m.id === 'M01') ? 115 : 100;
     const hStats = {
@@ -760,7 +754,7 @@
       stamina: clamp(effectiveStat(horse, 'stamina') + m02, 1, 100),
     };
     const hClim = effectiveClimate(horse, climate, hasR04);
-    const hGlobalMul = (hasR03 ? 0.01 : 1.0) * traitMul * r12Mul * hClim.maxSpeedMul;
+    const hGlobalMul = (hasR03 ? 0.01 : 1.0) * traitMul * hClim.maxSpeedMul;
     const hMaxSpeed = STAT_FORMULA.maxSpeed(hStats.speed) * hGlobalMul;
     const hAccel    = STAT_FORMULA.accel(hStats.power)    * hClim.accelMul;
     const hPool     = STAT_FORMULA.staminaPool(hStats.stamina);
@@ -777,7 +771,6 @@
     // === Runtime ===
     const h = { pos: 0, vel: 0, stam: hPool, finished: false, finishTick: null };
     const e = { pos: 0, vel: 0, stam: ePool, finished: false, finishTick: null };
-    const hExtra = { g05Fired: false };
     const timeline = [];
     const finishOrder = []; // 'h' or 'e'
 
@@ -786,14 +779,8 @@
       const beh = segmentBehavior(seg, P, climateForSeg);
       const fatigueRatio = rt.stam / pool;
       const fatigue = fatigueRatio < 0 ? 0.55 : (fatigueRatio < 0.30 ? 0.85 : 1.00);
-      let extraMul = 1.0;
       const events = [];
-      if (isPlayer && hasG05 && seg.kind === 'sprint' && rt.pos < e.pos - 200 && !hExtra.g05Fired) {
-        extraMul = 1.40;
-        hExtra.g05Fired = true;
-        events.push('⚡ 黑馬爆發');
-      }
-      const cap = maxSpeed * beh.capMul * extraMul;
+      const cap = maxSpeed * beh.capMul;
       const target = cap * fatigue * (0.97 + rng() * 0.06);
       const dv = clamp(target - rt.vel, -accel * 1.5, accel);
       rt.vel = Math.max(0, rt.vel + dv);
@@ -808,14 +795,20 @@
       const hStep = h.finished ? null : step(h, hMaxSpeed, hAccel, hPool, hClim.drainMul, hClimateForSeg, hStats.power, true);
       const eStep = e.finished ? null : step(e, eMaxSpeed, eAccel, ePool, eClim.drainMul, eClimateForSeg, eStats.power, false);
 
-      // 衝線檢查
-      if (!h.finished && h.pos >= track.length) {
-        h.pos = track.length; h.finished = true; h.finishTick = t;
-        finishOrder.push('h');
-      }
-      if (!e.finished && e.pos >= track.length) {
-        e.pos = track.length; e.finished = true; e.finishTick = t;
-        finishOrder.push('e');
+      // 衝線檢查 — 同 tick 多人衝線時用 overshoot 排序避免系統性偏袒玩家
+      const hCrossing = !h.finished && h.pos >= track.length;
+      const eCrossing = !e.finished && e.pos >= track.length;
+      if (hCrossing || eCrossing) {
+        const candidates = [];
+        if (hCrossing) candidates.push({ key:'h', overshoot: h.pos - track.length, rt: h });
+        if (eCrossing) candidates.push({ key:'e', overshoot: e.pos - track.length, rt: e });
+        candidates.sort((a, b) => (b.overshoot - a.overshoot) || (rng() - 0.5));
+        for (const c of candidates) {
+          c.rt.pos = track.length;
+          c.rt.finished = true;
+          c.rt.finishTick = t;
+          finishOrder.push(c.key);
+        }
       }
 
       timeline.push({
@@ -846,6 +839,10 @@
   function applyRaceOutcome(result) {
     const { horse, won, isMajor, raceType, r03Forced, traitMul } = result;
     const reward = won ? (isMajor ? 10 : 3) : (isMajor ? 2 : 1);
+    // 播報快照：必須在 R01 降速與大典技能套用前抓，避免「賽中 OVR 與播報 OVR 不一致」
+    const playerSnapshot = { name: horse.name, total: totalStats(horse), score: Math.round(ovrOf(horse)) };
+    const enemySnapshot  = { name: result.opponent.name, total: totalStats(result.opponent), score: Math.round(ovrOf(result.opponent)) };
+
     game.money += reward;
     horse.racedThisTurn = true;
 
@@ -866,8 +863,8 @@
 
     game.races.unshift({
       year: game.yearsElapsed,
-      player: { name: horse.name, total: totalStats(horse), score: Math.round(ovrOf(horse)) },
-      enemy:  { name: result.opponent.name, total: totalStats(result.opponent), score: Math.round(ovrOf(result.opponent)) },
+      player: playerSnapshot,
+      enemy:  enemySnapshot,
       won, reward, isMajor,
       skillEarned: newSkill ? newSkill.name : null,
       raceType: raceType.name, raceAttr: raceType.attr, raceTerrain: raceType.terrain,
