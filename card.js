@@ -13,12 +13,14 @@ const RARITY_TIERS = [
 
 function rarityOf(horse) {
   const hasGold = horse.traits && horse.traits.displayed.some(t => t.type === 'gold');
-  if (hasGold) return RARITY_TIERS[0];
   const ovr = ovrOf(horse);
-  for (const tier of RARITY_TIERS) {
-    if (ovr >= tier.min) return tier;
+  // 金特 + OVR ≥ 75 才直升 GODLIKE；否則金特只給 +1 tier bump（避免 OVR 59 標 GODLIKE）
+  if (hasGold && ovr >= 75) return RARITY_TIERS[0];
+  let baseIdx = RARITY_TIERS.length - 1;
+  for (let i = 0; i < RARITY_TIERS.length; i++) {
+    if (ovr >= RARITY_TIERS[i].min) { baseIdx = i; break; }
   }
-  return RARITY_TIERS[RARITY_TIERS.length - 1];
+  return hasGold ? RARITY_TIERS[Math.max(0, baseIdx - 1)] : RARITY_TIERS[baseIdx];
 }
 
 function isLuckyBirth(horse) {
