@@ -1,6 +1,6 @@
 # Stage 規格詳細（從 CLAUDE.md 移出）
 
-CLAUDE.md 保留一行摘要；完整規格在此。最後更新：2026-04-27。
+CLAUDE.md 保留一行摘要；完整規格在此。最後更新：2026-05-01。
 
 ---
 
@@ -20,7 +20,7 @@ CLAUDE.md 保留一行摘要；完整規格在此。最後更新：2026-04-27。
 | B03 | 駱駝 | 沙漠賽道 +8% |
 | B04 | 神山 | 爬山地形 +10% |
 | B05 | GTR | 長平原地形 +10% |
-| B06 | 越野 | 起伏地形 +10% |
+| B06 | 越野 | 髮夾彎賽道 +10% |
 | B07 | 全能 | 每持有 1 個其他藍特額外 +3% |
 | B08 | 繁殖專家 | 藍特遺傳率提升（單親 50→80%，雙親 70→85%）|
 | B11 | 傳說遺志 | 死亡時，隨機 1 顯性特性傳給隨機 1 先發馬 |
@@ -112,101 +112,98 @@ T30 大典後 → 玩家手動按鈕進 Ragnarök 終局
 
 ---
 
-## Stage F — tick-based 賽事動畫
+## Stage F — 物理引擎賽事
 
-**Status：規格凍結**。建議 Stage E Playtest #2 完成後啟動實裝；但技術上可直接實裝，風險自評。
-
-### 觸發時機
-
-```js
-shouldAnimate(raceType) {
-  return game.settings.animationsEnabled &&
-         (raceType === 'grand' || raceType === 'final');
-}
-// 小賽事 / event turn → instant resolve
-// 全域開關：game.settings.animationsEnabled（預設 true）
-```
+**Status：實裝完成**。從原本的「弱馬 90 tick / 強馬 45 tick lerp」抽象規格，演化成「每 tick 算 vel/pos/stam 的物理模擬」。賽道由 segments 組成，氣候影響全程倍率。
 
 ### 三個公開介面
 
+```js
+simulateRaceMatch(horse, opponent, context) → result {
+  seed, horse, opponent, isMajor, raceType, won, r03Forced, traitMul, timeline, track
+}
+renderRaceReplay(result, onComplete)        // ASCII 動畫，可 skip
+applyRaceOutcome(result)                    // 寫入 racedThisTurn / R01 損耗 / 獎金 / 印記 / log
 ```
-simulateRaceMatch(horse, opponent, context) → raceTimeline
-renderRaceReplay(raceTimeline, { onComplete, onSkip })
-applyRaceOutcome(raceTimeline) → 永久狀態（R01 損耗 / racedThisTurn / 獎金 / 印記）
-```
 
-`context = { turn, raceType: 'grand'|'minor'|'event', track: { type }, seed }`
+`context = { isMajor, raceType, seed? }`；seed 預設亂數，固定 seed 下 simulateRaceMatch 為 deterministic。
 
-大典 2 名額由上層 racing subPhase 管理，不是 engine 的責任。
+### 賽道（TRACK_DEFS）
 
-### 進度尺度：0..1（不用 100）
+| 名稱 | 全長 | Segments |
+|---|---|---|
+| 長平原 | 2400m | straight 700 → mildCurve 300 → straight 800 → sprint 600 |
+| 髮夾彎 | 1600m | straight 400 → hairpin 200 → straight 400 → hairpin 200 → sprint 400 |
+| 爬山 | 1200m | straight 200 → climb 600 → descent 200 → sprint 200 |
+
+**Segment 行為**（`segmentBehavior(seg, P, climateMods)`）：
+
+| Kind | capMul | drainMul | recover | 備註 |
+|---|---|---|---|---|
+| straight | 1.00 | 1.00 | 0 | — |
+| mildCurve | `0.75 + P/400`（P50→0.875, P100→1.00）| 1.00 | 0 | 力量越高越不掉速 |
+| hairpin | `0.50 + P/250`（P50→0.70, P100→0.90）| 1.00 | 0 | 同上，懲罰更重 |
+| climb | `max(0.3, P/100)` | 1.10 | 0 | 力量決定爬坡上限 |
+| descent | 1.00 | 0.50 | 0.5 | 順勢回體力 |
+| sprint | 1.05 | 1.50 | 0 | 衝線段，重耗體力 |
+
+### 氣候（CLIMATE_MODS）
+
+| 屬性 | maxSpeedMul | accelMul | drainMul | curvePenaltyMul | 適應特性 |
+|---|---|---|---|---|---|
+| Normal | 1.00 | 1.00 | 1.00 | 1.00 | — |
+| Fire | 1.00 | 1.00 | 1.15 | 1.00 | B01 火足 |
+| Ice | 1.00 | 0.90 | 1.00 | 1.00 | B02 長毛 |
+| Sand | 0.95 | 1.00 | 1.00 | 1.00 | B03 駱駝 |
+
+**反向加成**（`effectiveClimate()`，僅對適應特性持有者）：
+- B01 火足 → maxSpeedMul: **1.05**（覆蓋 Fire 的 1.00）
+- B02 長毛 → curvePenaltyMul: **0.50**（彎道懲罰減半）
+- B03 駱駝 → drainMul: **0.90**（覆蓋 Sand）
+
+R04 裸體：跳過適應加成，吃完整 debuff。
+
+### 物理參數（STAT_FORMULA）
 
 ```js
-race = {
-  seed,            // 固定 seed → simulateRaceMatch 為純函式，動畫只是 replay
-  tickCount: 60,   // 60 tick × 100ms ≈ 6s；第一匹衝線後延 5 tick 才截止
-  segments: [
-    { range: [0.00, 0.20], type: 'start'    },
-    { range: [0.20, 0.60], type: 'straight' },
-    { range: [0.60, 0.85], type: 'curve'    },
-    { range: [0.85, 1.00], type: 'final'    }
-  ],
-  runtime: { [horseId]: { progress, powerDebuff, flags: {}, log: [] } },
-  timeline: [ { t, positions, events } × 60 ],
-  result:   { order, times }   // 供 applyRaceOutcome 使用
-}
+maxSpeed:    s => 12 + s * 0.10        // m/s,  s100 → 22 m/s
+accel:       p => 0.5  + p * 0.04      // m/s², p100 → 4.5 m/s²
+staminaPool: e => 50   + e             // 體力池, e100 → 150
+drainAtSpeed: v => v * 0.05            // 每 tick 體力消耗
 ```
 
-**每 tick 位移公式：**
-```
-ability       = (speed * 0.6 + power * 0.4) / 100        // 0..1
-targetTicks   = lerp(90, 45, ability)                     // 弱馬 90 tick / 強馬 45 tick
-baseDelta     = 1 / targetTicks
-staminaFactor = max(0.5, 1 - (t/tickCount) * (1 - stamina/100) * 0.8)
-delta         = baseDelta * staminaFactor * traitMul * jitter(seed, horseId, t)
-```
+### 模擬迴圈（每 tick）
 
-### race-local vs horse 本體
-
-| 在哪改 | 內容 |
-|---|---|
-| `race.runtime[id]` | tick 期間暫態（flags / debuff / 進度）|
-| `applyRaceOutcome()` | 永久損耗（R01 速度 -1）/ `racedThisTurn = true` / 獎金 |
-
-Skip 動畫 → 直接讀 `race.timeline[last]` → 呼叫 `applyRaceOutcome`，不重模擬。
-
-### Hook 分類（新舊共存）
-
-| Hook | 用途 | 示例特性 |
-|---|---|---|
-| `onPreRace(ctx, horse, roster)` | 賽前倍率 / 強制失敗 / 抑制其他特性 | R03 必敗 / R04 裸體 / R12 嫉妒心 / B01-06 賽道 |
-| `onTick(horse, t, seg, runtime)` | 分段 / 名次觸發 | G05 黑馬 / G01 GOAT（衝刺段）|
-| `onPostRace(horse, race)` | 賽後永久損耗 | R01 燃盡 speed -1 |
-| `onYearEnd(horse, game)` | 年度非賽事效果 | R06 暴食 / G03 芙莉蓮衰減 |
-| `onDeath(horse, game)` | 死亡觸發 | G02 鳳凰之血 / B11 傳說遺志 |
-
-R04 `suppressOtherTraits: true` → engine 遇到此 flag 跳過該馬其他 onTick hook。
-
-### 邊界 / 平手規則
-
-- **跨段偵測**：每 tick 若 `prev < seg.start <= next`，補一筆 `enterSegment` 事件，避免 tick 步長跳過觸發點。
-- **平手判定**（固定 seed 下 deterministic）：完賽 tick 小者贏 → 同 tick 比 progress 餘量 → 仍同則比 `speed → power → stamina → id` 字典序。
-
-### ASCII 渲染
-
-```
-T18 ─ 第三屆大典 ─────────────  tick 42/60   [跳過 ▶▶]
-──────────────────────────────────────────────
-1│ 闇影 風煞   ━━━━━━━━━━━━━━━━━━━━━━━╸🐴 ░░░  85%
-2│ 黑霧 緋焰   ━━━━━━━━━━━━━━━━━━━━╸🐴   ░░░░  79% ⚡衝刺爆發
-3│ 烏鴉 之嗣   ━━━━━━━━━━━━━━━━╸🐴       ░░░░  64% 🔥燃盡 -1 速度
-──────────────────────────────────────────────
+```js
+// per horse:
+seg = getSegmentAt(track, rt.pos);
+beh = segmentBehavior(seg, P, climateForSeg);
+fatigueRatio = rt.stam / pool;
+fatigue = fatigueRatio < 0 ? 0.55 : (fatigueRatio < 0.30 ? 0.85 : 1.00);
+cap    = maxSpeed * beh.capMul * extraMul;          // extraMul: G05 黑馬衝刺爆發 1.40
+target = cap * fatigue * (0.97 + rng() * 0.06);
+dv     = clamp(target - rt.vel, -accel * 1.5, accel);
+rt.vel = max(0, rt.vel + dv);
+rt.pos += rt.vel;
+rt.stam -= STAT_FORMULA.drainAtSpeed(rt.vel) * beh.drainMul * climateDrainMul;
+rt.stam += beh.recover;
 ```
 
-事件文字只顯示最近 1–2 tick，不滾版。
+`RACE_TICK_CAP = 250`；任一匹衝線（`pos >= track.length`）即結束。
 
-### 不變式（補入 Game invariants）
+### 玩家側特性整合（applyTraitMultiplier 維持，物理層額外計）
 
-- `simulateRaceMatch` 為純函式：不讀 `Date.now()` / `Math.random()`，所有亂數透過 seeded RNG。
-- `applyRaceOutcome` 每場只能呼叫一次；engine 不直接改 `horse.*`，含 `racedThisTurn`。
-- `renderRaceReplay` 可被 skip，不影響 `raceTimeline` 或 `applyRaceOutcome` 的正確性。
+- **traitMul**（前置乘倍）：`applyTraitMultiplier(horse, attr, terrain)` 套用 B01-B06 + B07 + R02。R04 將 traitMul 設 1.0。
+- **R12 嫉妒心**：roster 中 OVR 最高 ×1.10，否則 ×0.90。
+- **R03 玻璃心**：大典 hGlobalMul 直接 ×0.01（必輸）。
+- **G05 黑馬**：sprint 段位置落後對手 200m 以上時觸發一次 1.40× cap，僅一次。
+- **M01 無瑕之眼**：speed clamp 上限 100 → 115。
+- **M02 戰神血脈**：大典中 speed/power/stamina 各 +10。
+
+### 不變式
+
+- `simulateRaceMatch` 透過 `mulberry32(seed)` 取亂數；context 傳固定 seed → deterministic。
+- `applyRaceOutcome` 每場呼叫一次；engine 不直接改 `horse.racedThisTurn`，由 applyRaceOutcome 寫入。
+- `renderRaceReplay` 純 replay timeline，可被 skip 不影響 outcome 正確性。
+- 對手模擬不吃適應加成（敵方無 traits）。
+- TRACK_DEFS 鍵集合凍結為 `長平原 / 髮夾彎 / 爬山`，新增賽道需同步改 RACE_TYPES + B06 desc + 對應 segments。
