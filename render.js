@@ -135,15 +135,24 @@
     }
 
     const venueCard = document.getElementById('race-venue-card');
-    if (game.currentRace && game.yearsElapsed > 0 && game.yearsElapsed < game.maxYears + 1) {
-      const r = game.currentRace;
+    const preview = (game.yearsElapsed > 0 && game.yearsElapsed <= game.maxYears) ? peekNextRace() : null;
+    if (preview && preview.race) {
+      const r = preview.race;
+      const isCurrent = !!game.currentRace;
       venueCard.style.display = 'block';
+      const labelEl = venueCard.querySelector('.venue-label');
+      if (labelEl) {
+        labelEl.textContent = isCurrent
+          ? '本年賽道'
+          : `下一場預告 · 第 ${preview.turn} 年${preview.isMajor ? ' · ⚡ 大典' : ' · 小賽事'}`;
+      }
       document.getElementById('venue-name').textContent = r.name;
       const attrEl = document.getElementById('venue-attr');
       attrEl.textContent = ATTR_LABEL[r.attr] || r.attr;
       attrEl.className = 'attr-badge attr-' + r.attr;
       document.getElementById('venue-terrain').textContent = r.terrain;
-      const hintMap = {
+      // 場地適性提示（既有特性對策）
+      const attrHintMap = {
         Fire: '帶 B01 火足 +8%',
         Ice:  '帶 B02 長毛 +8%',
         Sand: '帶 B03 駱駝 +8%',
@@ -153,10 +162,25 @@
         '長平原': '帶 B05 GTR +10%',
         '髮夾彎': '帶 B06 越野 +10%',
       };
-      const hints = [hintMap[r.attr], terrainHintMap[r.terrain]].filter(Boolean);
+      // 三圍偏向提示（讓買馬有依據）
+      const statHintMap = {
+        '長平原': '速度型佔優（直線多）',
+        '髮夾彎': '力量+體力型佔優（連續彎道）',
+        '爬山':   '體力+力量型佔優（爬坡爆發）',
+      };
+      const climateHintMap = {
+        Fire: '體力消耗 +15%（火足可抵）',
+        Ice:  '加速 -10%（長毛可抵）',
+        Sand: '最高速 -5%（駱駝可抵）',
+      };
+      const traitHints = [attrHintMap[r.attr], terrainHintMap[r.terrain]].filter(Boolean);
+      const statHints  = [statHintMap[r.terrain], climateHintMap[r.attr]].filter(Boolean);
       const hintEl = document.getElementById('venue-hint');
-      hintEl.textContent = hints.length ? '相性：' + hints.join(' · ') : '';
-      hintEl.style.display = hints.length ? 'block' : 'none';
+      const lines = [];
+      if (statHints.length)  lines.push(`<span class="hint-line">⚔ ${statHints.join(' · ')}</span>`);
+      if (traitHints.length) lines.push(`<span class="hint-line">✦ 相性：${traitHints.join(' · ')}</span>`);
+      hintEl.innerHTML = lines.join('');
+      hintEl.style.display = lines.length ? 'block' : 'none';
     } else {
       venueCard.style.display = 'none';
     }
@@ -298,11 +322,14 @@
       marketList.innerHTML = `<div class="empty">黑市清空，待下一年補貨。</div>`;
     } else {
       marketList.innerHTML = game.market.map(m => `
-        <div class="market-card">
+        <div class="market-card${m._discount ? ' discount' : ''}${m._rare ? ' rare' : ''}">
           <div class="horse-info">
             <div class="horse-name-row">
               <span class="horse-name">${m.name}</span>
               <span class="gender ${m.gender}">${m.gender === 'male' ? '公' : '母'}</span>
+              ${m.skill ? `<span class="skill-badge">${m.skill.name}</span>` : ''}
+              ${m._discount ? `<span class="discount-tag">特價</span>` : ''}
+              ${m._rare ? `<span class="rare-tag">稀有</span>` : ''}
             </div>
             <div class="stats-row">
               <span class="stat-pill">速度 <strong>${m.speed}</strong></span>
@@ -325,12 +352,8 @@
       list.innerHTML = `<div class="empty">馬廄空無一物。</div>`;
     } else {
       const sorted = [...game.horses].sort((a, b) => ovrOf(b) - ovrOf(a));
-      const showAll = game.stableExpanded || sorted.length <= 5;
-      const visible = showAll ? sorted : sorted.slice(0, 5);
-      const hiddenCount = sorted.length - visible.length;
-
       const majorFull = game.currentTurnMajor && game.horses.filter(h => h.racedThisTurn).length >= 2;
-      const cards = visible.map(h => {
+      const cards = sorted.map(h => {
         const mut = h.mutated || {};
         const raceBtn = h.status === STATE_PEAK
           ? `<button class="race-btn" data-id="${h.id}" ${(h.racedThisTurn || majorFull) ? 'disabled' : ''}>${h.racedThisTurn ? '已參賽' : majorFull ? '名額已滿' : '參加賽事'}</button>`
@@ -376,11 +399,7 @@
         `;
       }).join('');
 
-      const toggle = sorted.length > 5
-        ? `<button class="stable-toggle" id="stable-toggle">${game.stableExpanded ? '‹ 收合' : `› 展開（隱藏 ${hiddenCount} 匹）`}</button>`
-        : '';
-
-      list.innerHTML = cards + toggle;
+      list.innerHTML = cards;
     }
 
     // Bench list
@@ -511,16 +530,30 @@
           .sort((a, b) => ovrOf(b) - ovrOf(a))[0];
         target = candidate ? `→ 將施加於 ${candidate.name}` : '→ 無對象（將浪費）';
       } else if (c.kind === 'marketBuff') {
-        target = '→ 影響下一年的黑市';
+        target = '→ 影響下一年的黑市（價格上漲）';
+      } else if (c.kind === 'marketDiscount') {
+        target = '→ 影響下一年的黑市（價格不變）';
       } else if (c.kind === 'gold') {
         target = `→ +${c.amount}G`;
+      } else if (c.kind === 'foal') {
+        target = `→ 替補席 +1 隻 0 歲幼駒`;
       } else if (c.kind === 'mark') {
         target = '→ 永久印記，A 型隱性遺傳';
       }
-      const kindLabel = c.kind === 'mark' ? '印記' : c.kind === 'trait' ? '藍特' : c.kind === 'marketBuff' ? '黑市' : '即時';
+      const kindLabel = c.kind === 'mark' ? '印記'
+                      : c.kind === 'trait' ? '藍特'
+                      : c.kind === 'marketBuff' ? '黑市'
+                      : c.kind === 'marketDiscount' ? '黑市'
+                      : c.kind === 'foal' ? '幼駒'
+                      : '即時';
+      const rarity = c.rarity || (game.pendingChoice.kind === 'mark' ? 'rare' : 'common');
+      const rarityLabel = rarity === 'rare' ? '稀有' : '普通';
       return `
-        <div class="choice-card" data-idx="${i}">
-          <div class="choice-card-kind">${kindLabel}</div>
+        <div class="choice-card rarity-${rarity}" data-idx="${i}">
+          <div class="choice-card-tags">
+            <div class="choice-card-kind">${kindLabel}</div>
+            <div class="choice-card-rarity rarity-${rarity}">${rarityLabel}</div>
+          </div>
           <div class="choice-card-title">${c.title}</div>
           <div class="choice-card-desc">${c.desc}</div>
           <div class="choice-card-target">${target}</div>
@@ -567,11 +600,6 @@
     if (demoteBtn) {
       moveToBench(demoteBtn.dataset.benchId);
       return;
-    }
-    const toggle = e.target.closest('.stable-toggle');
-    if (toggle) {
-      game.stableExpanded = !game.stableExpanded;
-      render();
     }
   });
   document.getElementById('bench-list').addEventListener('click', (e) => {

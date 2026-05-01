@@ -60,15 +60,19 @@
   };
   const MARK_IDS = ['M01', 'M02'];
 
+  // weight: 加權抽取權重；rarity: 'common' | 'rare'（影響卡片邊框顏色）
   const EVENT_CARDS = [
-    { id:'E_B01', kind:'trait', traitId:'B01', title:'火足傳承', desc:'將藍特「火足」(火焰賽道+8%) 賜予馬廄 OVR 最高的馬。' },
-    { id:'E_B02', kind:'trait', traitId:'B02', title:'長毛傳承', desc:'將藍特「長毛」(冰雪賽道+8%) 賜予馬廄 OVR 最高的馬。' },
-    { id:'E_B03', kind:'trait', traitId:'B03', title:'駱駝傳承', desc:'將藍特「駱駝」(沙漠賽道+8%) 賜予馬廄 OVR 最高的馬。' },
-    { id:'E_B04', kind:'trait', traitId:'B04', title:'神山傳承', desc:'將藍特「神山」(爬山地形+10%) 賜予馬廄 OVR 最高的馬。' },
-    { id:'E_B05', kind:'trait', traitId:'B05', title:'GTR傳承',  desc:'將藍特「GTR」(長平原+10%) 賜予馬廄 OVR 最高的馬。' },
-    { id:'E_B06', kind:'trait', traitId:'B06', title:'越野傳承', desc:'將藍特「越野」(髮夾彎+10%) 賜予馬廄 OVR 最高的馬。' },
-    { id:'E_RARE', kind:'marketBuff', title:'稀有馬場', desc:'下一年的黑市馬匹三圍全部 +15。' },
-    { id:'E_GOLD', kind:'gold', amount:5, title:'黃金祭壇', desc:'立即獲得 5G。' },
+    { id:'E_B01', kind:'trait', traitId:'B01', rarity:'common', weight:1, title:'火足傳承', desc:'將藍特「火足」(火焰賽道+8%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_B02', kind:'trait', traitId:'B02', rarity:'common', weight:1, title:'長毛傳承', desc:'將藍特「長毛」(冰雪賽道+8%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_B03', kind:'trait', traitId:'B03', rarity:'common', weight:1, title:'駱駝傳承', desc:'將藍特「駱駝」(沙漠賽道+8%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_B04', kind:'trait', traitId:'B04', rarity:'common', weight:1, title:'神山傳承', desc:'將藍特「神山」(爬山地形+10%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_B05', kind:'trait', traitId:'B05', rarity:'common', weight:1, title:'GTR傳承',  desc:'將藍特「GTR」(長平原+10%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_B06', kind:'trait', traitId:'B06', rarity:'common', weight:1, title:'越野傳承', desc:'將藍特「越野」(髮夾彎+10%) 賜予馬廄 OVR 最高的馬。' },
+    { id:'E_GOLD',       kind:'gold',          amount:5,  rarity:'common', weight:2, title:'黃金祭壇',   desc:'立即獲得 5G。' },
+    { id:'E_FOAL',       kind:'foal',                     rarity:'common', weight:2, title:'棄駒收容',   desc:'魔界使者帶來一隻 0 歲幼駒，直接進替補席（當年凍結賽/育）。' },
+    { id:'E_GOLD_LARGE', kind:'gold',          amount:10, rarity:'rare',   weight:1, title:'魔王恩賜',   desc:'立即獲得 10G。' },
+    { id:'E_RARE',       kind:'marketBuff',               rarity:'rare',   weight:1, title:'稀有馬場',   desc:'下一年的黑市馬匹三圍全部 +15（價格亦上漲）。' },
+    { id:'E_DISCOUNT',   kind:'marketDiscount',           rarity:'rare',   weight:1, title:'特價馬場',   desc:'下一年的黑市馬匹三圍 +15，但價格不變（撿便宜）。' },
   ];
 
   const RACE_TYPES = [
@@ -131,21 +135,22 @@
 
   const RACE_TICK_CAP = 250;
 
+  // sev: gold=優良 / good=佳選 / normal=普通 / medium=差 / high=爛
   const VET_LINES = {
     goldResonance:{ text:'……老夫行醫數千年，僅見過寥寥數次這種血統共鳴。\n不敢妄言，但請務必好好珍惜這一胎。', sev:'gold' },
     redDouble:    { text:'老夫有句話不得不說……這對血統曾令老夫見過慘烈的結局。\n子代或將承受難以擺脫的詛咒，還請三思。', sev:'high' },
     redSingle:    { text:'此方血液中有些令老夫不安的氣息。\n子代或許會繼承某種難以克服的弱點。', sev:'medium' },
-    recessiveB01: { text:'血統中似乎潛藏著與烈火親近的因子。\n若子代繼承，在特定賽道或有驚人表現。', sev:'' },
-    recessiveB02: { text:'隱約感受到冰雪血脈的共鳴。\n子代或許天生適應嚴寒之地。', sev:'' },
-    recessiveB03: { text:'沙塵的氣息在血統中流動。\n子代在荒漠賽道或有超乎預期的發揮。', sev:'' },
-    recessiveB04: { text:'骨骼結構頗為紮實，山地血統的印記清晰可見。\n爬坡或是此子天生的舞台。', sev:'' },
-    recessiveB05: { text:'四肢比例修長，有平原疾馳者的血統輪廓。\n長直賽道或能見到此子的真正速度。', sev:'' },
-    recessiveB06: { text:'重心極低，對連續彎道有天然的適應傾向。\n或許能在最複雜的髮夾賽道中找到節奏。', sev:'' },
-    recessiveB07: { text:'血脈中似乎潛藏著某種「共鳴」之力。\n若子代繼承且擁有多個天賦，將彼此放大。', sev:'' },
-    recessiveB08: { text:'此血脈生機旺盛，傳承之力勝於常理。\n子代或將更完整地承繼父母的隱性天賦。', sev:'' },
-    highDiff:     { text:'血統差異顯著，子代走向難以預測。\n然而，老夫見過最驚人的突破，往往來自這樣的配對。', sev:'' },
-    lowDiff:      { text:'兩者血統過於相近，子代恐怕難有突破。\n突變，是唯一的希望。', sev:'' },
-    normal:       { text:'這對配對血統相性尚可。\n子代應能穩定繼承雙親之長。', sev:'' },
+    recessiveB01: { text:'血統中似乎潛藏著與烈火親近的因子。\n若子代繼承，在特定賽道或有驚人表現。', sev:'good' },
+    recessiveB02: { text:'隱約感受到冰雪血脈的共鳴。\n子代或許天生適應嚴寒之地。', sev:'good' },
+    recessiveB03: { text:'沙塵的氣息在血統中流動。\n子代在荒漠賽道或有超乎預期的發揮。', sev:'good' },
+    recessiveB04: { text:'骨骼結構頗為紮實，山地血統的印記清晰可見。\n爬坡或是此子天生的舞台。', sev:'good' },
+    recessiveB05: { text:'四肢比例修長，有平原疾馳者的血統輪廓。\n長直賽道或能見到此子的真正速度。', sev:'good' },
+    recessiveB06: { text:'重心極低，對連續彎道有天然的適應傾向。\n或許能在最複雜的髮夾賽道中找到節奏。', sev:'good' },
+    recessiveB07: { text:'血脈中似乎潛藏著某種「共鳴」之力。\n若子代繼承且擁有多個天賦，將彼此放大。', sev:'good' },
+    recessiveB08: { text:'此血脈生機旺盛，傳承之力勝於常理。\n子代或將更完整地承繼父母的隱性天賦。', sev:'good' },
+    highDiff:     { text:'血統差異顯著，子代走向難以預測。\n然而，老夫見過最驚人的突破，往往來自這樣的配對。', sev:'good' },
+    lowDiff:      { text:'兩者血統過於相近，子代恐怕難有突破。\n突變，是唯一的希望。', sev:'medium' },
+    normal:       { text:'這對配對血統相性尚可。\n子代應能穩定繼承雙親之長。', sev:'normal' },
   };
 
   const RANK_LABELS = ['冠軍', '亞軍', '季軍'];

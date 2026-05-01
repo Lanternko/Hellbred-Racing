@@ -102,12 +102,18 @@
   }
 
   function makeEventChoice() {
-    // 從 EVENT_CARDS pool 抽 3 張不重覆
-    const pool = [...EVENT_CARDS];
+    // 從 EVENT_CARDS pool 加權抽 3 張不重覆（weighted random sampling without replacement）
+    const pool = EVENT_CARDS.map(c => ({ ...c }));
     const cards = [];
     for (let i = 0; i < 3 && pool.length; i++) {
-      const idx = Math.floor(Math.random() * pool.length);
-      cards.push(pool.splice(idx, 1)[0]);
+      const total = pool.reduce((s, c) => s + (c.weight || 1), 0);
+      let roll = Math.random() * total;
+      let pickIdx = pool.length - 1;
+      for (let k = 0; k < pool.length; k++) {
+        roll -= (pool[k].weight || 1);
+        if (roll <= 0) { pickIdx = k; break; }
+      }
+      cards.push(pool.splice(pickIdx, 1)[0]);
     }
     return { kind: 'event', cards };
   }
@@ -128,9 +134,18 @@
     } else if (card.kind === 'marketBuff') {
       game.nextMarketBuff = true;
       addLog(`活動「${card.title}」→ 下一年黑市馬匹 +15 三圍`, 'soul');
+    } else if (card.kind === 'marketDiscount') {
+      game.nextMarketDiscount = true;
+      addLog(`活動「${card.title}」→ 下一年黑市三圍 +15、價格不變`, 'soul');
     } else if (card.kind === 'gold') {
       game.money += card.amount;
       addLog(`活動「${card.title}」→ 獲得 ${card.amount}G`, 'soul');
+    } else if (card.kind === 'foal') {
+      const foal = makeHorse({ age: 0 });
+      foal.racedThisTurn = true;
+      foal.bredThisTurn = true;
+      game.bench.push(foal);
+      addLog(`活動「${card.title}」→ 替補席收容幼駒 ${foal.name}（${foal.gender === 'male' ? '公' : '母'}）`, 'soul');
     }
   }
 
@@ -311,10 +326,12 @@
     bench: [],
     subPhase: null, // 'roster' | 'racing' | 'breeding' | null (event turn)
     currentRace: null, // { name, attr, terrain } — 整年共用同一賽道，event turn 為 null
+    nextRacePreview: null, // { race, turn, isMajor } — 活動 turn 預告下一場
     batchRacedThisTurn: false,
     primariesThisYear: 0,
     _raceQueue: null,
     nextMarketBuff: false,
+    nextMarketDiscount: false,
     pendingChoice: null, // { kind: 'event'|'mark', cards: [...], context: {...} }
     pendingChoiceQueue: [],
     settings: { animationsEnabled: true },
@@ -403,6 +420,28 @@
     promoteFromBench();
   }
 
+  // 找下一個賽事 turn（小賽事 T mod 6 = 3 / 大典 T mod 6 = 0）
+  function findNextRaceTurnNumber(currentTurn) {
+    for (let t = currentTurn + 1; t <= game.maxYears / game.yearPerTurn; t++) {
+      const phase = ((t - 1) % 6) + 1;
+      if (phase === 3 || phase === 6) return t;
+    }
+    return null;
+  }
+
+  // peek：當前若為賽事 turn 回傳 currentRace；若為活動回合則 lazy-roll 下一場並 cache
+  function peekNextRace() {
+    if (game.currentRace) return { race: game.currentRace, turn: game.yearsElapsed / game.yearPerTurn, isMajor: game.currentTurnMajor };
+    if (!game.nextRacePreview) {
+      const currentTurn = game.yearsElapsed / game.yearPerTurn;
+      const t = findNextRaceTurnNumber(currentTurn);
+      if (!t) return null;
+      const isMajor = ((t - 1) % 6) + 1 === 6;
+      game.nextRacePreview = { race: pick(RACE_TYPES), turn: t, isMajor };
+    }
+    return game.nextRacePreview;
+  }
+
   function nextTurn() {
     if (game.yearsElapsed >= game.maxYears) return;
     game.yearsElapsed += game.yearPerTurn;
@@ -434,6 +473,7 @@
     }
 
     const buffApplied = game.nextMarketBuff;
+    const discountApplied = game.nextMarketDiscount;
     game.market = makeMarket();
     if (buffApplied) {
       game.market.forEach(m => {
@@ -448,6 +488,17 @@
       addLog(`✨ 稀有馬場開張 · 黑市馬匹三圍 +15`, 'soul');
       game.nextMarketBuff = false;
     }
+    if (discountApplied) {
+      // 三圍 +15 但不重算價格 — 用「特價」價標示
+      game.market.forEach(m => {
+        m.speed = clamp(m.speed + 15, 1, 100);
+        m.power = clamp(m.power + 15, 1, 100);
+        m.stamina = clamp(m.stamina + 15, 1, 100);
+        m._discount = true;
+      });
+      addLog(`✨ 特價馬場開張 · 黑市三圍 +15、價格不變`, 'soul');
+      game.nextMarketDiscount = false;
+    }
 
     const phaseTag = game.currentTurnPhase === 'major' ? '〔大典〕 '
                    : game.currentTurnPhase === 'race'  ? '〔小賽事〕 '
@@ -460,7 +511,14 @@
       pushPending(makeEventChoice()); // 老化延遲到玩家選完卡片後（pickChoiceCard）
     } else {
       game.subPhase = 'roster';
-      game.currentRace = pick(RACE_TYPES);
+      // 若上一個活動 turn 已 peek 過下一場，直接消費；否則現抽
+      const preview = game.nextRacePreview;
+      if (preview && preview.turn === currentTurn) {
+        game.currentRace = preview.race;
+      } else {
+        game.currentRace = pick(RACE_TYPES);
+      }
+      game.nextRacePreview = null;
       // 賽事回合：老化延遲到賽事結束後（advanceFromRacing），讓馬先比賽再退役
     }
 
