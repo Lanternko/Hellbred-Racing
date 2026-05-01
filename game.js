@@ -331,11 +331,15 @@
   }
   function resolvePending() {
     game.pendingChoice = game.pendingChoiceQueue.shift() || null;
-    // 沒有 pending 且大典 race 流程仍在進行（queue 已建立但尚未收尾）→ 接手
+    if (game.pendingChoice) return;
+    // 大典 race 流程仍在進行（queue 已建立但尚未收尾）→ 接手
     // 注意：queue 在 shift 後可能 length=0 但仍 != null；空時 runNextQueuedRace 會自動 advanceFromRacing
-    if (!game.pendingChoice && game._raceQueue !== null) {
+    if (game._raceQueue !== null) {
       runNextQueuedRace();
+      return;
     }
+    // 個別出戰路徑下 modal 解掉後也要檢查推進
+    maybeAutoAdvanceRacing();
   }
 
   function init() {
@@ -506,6 +510,17 @@
     ageAllHorses(); // 賽事結束才老化，確保 age-4 馬能出賽後才退役
     game.subPhase = 'breeding';
     render();
+  }
+
+  // 個別出戰按鈕沒有 queue／也沒接 onComplete 鏈，沒人 trigger 推進。
+  // 在每次賽事結束與 modal 解掉後檢查：無 pending、無 queue、無可賽馬 → 自動推進。
+  function maybeAutoAdvanceRacing() {
+    if (game.subPhase !== 'racing') return;
+    if (game.pendingChoice) return;          // 等 mark / event modal 解
+    if (game._raceQueue !== null) return;    // 大典批次正在跑
+    if (getRaceBatch().length > 0) return;   // 還有可賽馬
+    game.batchRacedThisTurn = true;
+    advanceFromRacing();
   }
 
   function getRaceBatch() {
@@ -903,11 +918,13 @@
         applyRaceOutcome(result);
         render();
         if (onComplete) onComplete();
+        else maybeAutoAdvanceRacing();
       });
     } else {
       applyRaceOutcome(result);
       render();
       if (onComplete) onComplete();
+      else maybeAutoAdvanceRacing();
     }
   }
 
