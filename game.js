@@ -313,6 +313,7 @@
     currentRace: null, // { name, attr, terrain } — 整年共用同一賽道，event turn 為 null
     batchRacedThisTurn: false,
     primariesThisYear: 0,
+    _raceQueue: null,
     nextMarketBuff: false,
     pendingChoice: null, // { kind: 'event'|'mark', cards: [...], context: {...} }
     pendingChoiceQueue: [],
@@ -330,6 +331,11 @@
   }
   function resolvePending() {
     game.pendingChoice = game.pendingChoiceQueue.shift() || null;
+    // 沒有 pending 且大典 race 流程仍在進行（queue 已建立但尚未收尾）→ 接手
+    // 注意：queue 在 shift 後可能 length=0 但仍 != null；空時 runNextQueuedRace 會自動 advanceFromRacing
+    if (!game.pendingChoice && game._raceQueue !== null) {
+      runNextQueuedRace();
+    }
   }
 
   function init() {
@@ -522,20 +528,29 @@
     if (!batch.length) { advanceFromRacing(); return; }
 
     if (game.currentTurnMajor && game.settings.animationsEnabled) {
-      function next(remaining) {
-        if (!remaining.length) {
-          game.batchRacedThisTurn = true;
-          advanceFromRacing();
-          return;
-        }
-        runRace(remaining[0].id, () => next(remaining.slice(1)));
-      }
-      next(batch);
+      game._raceQueue = batch.map(h => h.id);
+      runNextQueuedRace();
     } else {
       batch.forEach(h => runRace(h.id));
       game.batchRacedThisTurn = true;
       advanceFromRacing();
     }
+  }
+
+  // 連續大典：先完成一場、若彈出 mark modal 則凍住，等選完再 resume
+  function runNextQueuedRace() {
+    const q = game._raceQueue;
+    if (!q || !q.length) {
+      game._raceQueue = null;
+      game.batchRacedThisTurn = true;
+      advanceFromRacing();
+      return;
+    }
+    const id = q.shift();
+    runRace(id, () => {
+      if (game.pendingChoice) return; // 等 resolvePending() 接手
+      runNextQueuedRace();
+    });
   }
 
   function buyMarketHorse(marketId) {
