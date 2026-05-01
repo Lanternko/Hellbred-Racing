@@ -86,7 +86,8 @@ Stage A + B + C + D + E + F + 命名系統 + 卡片系統已實作；codebase �
 - **6-turn cycle 不可變**：T6/12/18/24/30 必為大典；T3/9/15/21/27 必為小賽事；其餘 turn 為活動 turn。
 - **印記每馬最多 1 枚**：取得新印記時若已有印記，舊印記不被覆蓋（可遺傳但本馬不再吃新印記）。冠軍若已滿則跳過獎勵。
 - **交配前提**：**主動方**（primary）`racedThisTurn === true` 必須當年完賽。**被選方**（secondary）無限制：替補、bench、未參賽、已配皆可。UI 採兩步選擇（先任意性別 → 再對應異性），選擇不消耗次數。
-- **公馬一胎/年（主動限制）**：公馬作為主動方時 `father.bredThisTurn` 觸發即拒絕；作為被選方時不受限。母馬無胎次限制。
+- **每馬主動 1 胎/年（公母皆然）**：作為主動方時 `primary.bredThisTurn` 觸發即拒絕；作為被選方時不受限。
+- **全年主動上限 6**：`game.primariesThisYear ≥ 6` 即拒絕新主動交配（即使 stable 擴充至 >6 仍封頂）。`nextTurn()` 重置為 0。
 - **黑市**：每回合保證至少 1 公 1 母（`makeMarket()`）；特性機率 35%（藍/紅隨機）；技能機率 15%；價格 ∝ OVR × (5−age) ÷ 20 + 技能 +3G。整隊/賽事/育馬三期均可購入。
 - **subPhase 推進不可逆**：`roster → racing → breeding`；「下一年」按鈕僅在 breeding 或 event-modal-resolved 時可按。
 - **Stage F 賽道集合**：`TRACK_DEFS` 鍵僅 `長平原 / 髮夾彎 / 爬山` 三種；`RACE_TYPES.terrain` 必須是其中之一。**禁止**再寫「起伏不定」字串。

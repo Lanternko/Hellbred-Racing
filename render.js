@@ -208,9 +208,10 @@
     // 育種：主動方需參賽過；被選方（secondary）無限制
     const breedAge = h => h.age >= 1 && h.age <= 4;
     const allBreedable = [...game.horses, ...game.bench];
-    // primary 候選：參賽過，公馬需未主動配過
-    const primaryEligible = h => breedAge(h) && h.racedThisTurn && !(h.gender === 'male' && h.bredThisTurn);
-    const allPrimary = allBreedable.filter(primaryEligible);
+    // primary 候選：參賽過 + 未主動配過（公母皆然）；全年主動上限 6
+    const capReached = (game.primariesThisYear || 0) >= 6;
+    const primaryEligible = h => breedAge(h) && h.racedThisTurn && !h.bredThisTurn;
+    const allPrimary = capReached ? [] : allBreedable.filter(primaryEligible);
     // secondary 候選：年齡符合即可（替補、未參賽、已配皆可）
     const allSecondaryPool = (gender) => allBreedable.filter(h => h.gender === gender && breedAge(h));
     // 清除失效的選擇
@@ -226,8 +227,8 @@
 
     const breedCardHtml = (h, isPrimary) => {
       const sel = isPrimary ? game.breedPrimaryId === h.id : game.breedSecondaryId === h.id;
-      // primary：公馬已主動交配過則 disabled；secondary：任何人都可選，無 disabled
-      const disabledCard = isPrimary && h.gender === 'male' && h.bredThisTurn;
+      // primary：已主動交配過則 disabled（公母皆然）；secondary：任何人都可選
+      const disabledCard = isPrimary && h.bredThisTurn;
       const cls = `breed-card${sel ? ' selected' : ''}${disabledCard ? ' disabled' : ''}`;
       const bredTag = h.bredThisTurn ? '已配' : `${h.age}歲`;
       const ageTag = isPrimary ? bredTag : (h.racedThisTurn ? `${h.age}歲` : `${h.age}歲・未賽`);
@@ -252,7 +253,7 @@
     // 第一步：已完賽馬匹（公馬未主動配過）
     primaryListEl.innerHTML = allPrimary.length
       ? allPrimary.map(h => breedCardHtml(h, true)).join('')
-      : `<div class="breed-empty">無已完賽馬匹可交配</div>`;
+      : `<div class="breed-empty">${capReached ? '本年主動交配已達上限 6 / 6' : '無已完賽馬匹可交配'}</div>`;
     // 第二步：選定主動方後才啟用；被選方無參賽限制
     if (!primary) {
       step2El.style.opacity = '0.35';

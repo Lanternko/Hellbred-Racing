@@ -312,6 +312,7 @@
     subPhase: null, // 'roster' | 'racing' | 'breeding' | null (event turn)
     currentRace: null, // { name, attr, terrain } — 整年共用同一賽道，event turn 為 null
     batchRacedThisTurn: false,
+    primariesThisYear: 0,
     nextMarketBuff: false,
     pendingChoice: null, // { kind: 'event'|'mark', cards: [...], context: {...} }
     pendingChoiceQueue: [],
@@ -415,6 +416,7 @@
     }
 
     game.batchRacedThisTurn = false;
+    game.primariesThisYear = 0;
 
     for (const h of allOwnedHorses()) {
       h.racedThisTurn = false;
@@ -571,9 +573,14 @@
       if (!__cardSilent) addLog(`主動交配的馬匹必須在當年參賽過。`, 'death');
       return null;
     }
-    // 公馬作為主動方時每年只能交配一次
-    if (father.id === primary.id && father.bredThisTurn) {
-      if (!__cardSilent) addLog(`公馬 ${father.name} 當年已交配過 1 胎。`, 'death');
+    // 主動方每年只能交配一次（公母皆然）
+    if (primary.bredThisTurn) {
+      if (!__cardSilent) addLog(`${primary.name} 當年已主動交配過 1 胎。`, 'death');
+      return null;
+    }
+    // 全年主動交配上限 6
+    if ((game.primariesThisYear || 0) >= 6) {
+      if (!__cardSilent) addLog(`本年主動交配已達上限 6。`, 'death');
       return null;
     }
 
@@ -640,6 +647,7 @@
       game.bench.push(child);
     }
     primary.bredThisTurn = true; // 只有主動方計入一胎/年
+    game.primariesThisYear = (game.primariesThisYear || 0) + 1;
 
     const eventStr = events.length ? `〔${events.join('、')}〕` : '';
     const skillInherit = child.skill ? ` 繼承技能：${child.skill.name}` : '';
@@ -942,11 +950,14 @@
     const allFemales = allBreedable.filter(h => h.gender === 'female' && breedAge(h));
     const allMales   = allBreedable.filter(h => h.gender === 'male'   && breedAge(h));
     const pairs = [];
-    const virtualBredMales = new Set(allMales.filter(h => h.bredThisTurn).map(h => h.id));
+    const remainingCap = () => 6 - (game.primariesThisYear || 0) - pairs.length;
+    const virtualBredMales   = new Set(allMales.filter(h => h.bredThisTurn).map(h => h.id));
+    const virtualBredFemales = new Set(allFemales.filter(h => h.bredThisTurn).map(h => h.id));
 
     // 公馬主動：已完賽且未主動交配
     for (const father of allMales.filter(h => h.racedThisTurn && !virtualBredMales.has(h.id))
                                  .sort((a, b) => ovrOf(b) - ovrOf(a))) {
+      if (remainingCap() <= 0) break;
       if (!allFemales.length) break;
       const mother = allFemales.reduce((best, c) =>
         breedPairScore(father, c) > breedPairScore(father, best) ? c : best);
@@ -954,12 +965,14 @@
       pairs.push({ father, mother, primaryId: father.id });
     }
 
-    // 母馬主動：已完賽的母馬各挑最佳公馬（公馬作為被選方不受 bredThisTurn 限制）
-    for (const mother of allBreedable.filter(h => h.gender === 'female' && breedAge(h) && h.racedThisTurn)
-                                     .sort((a, b) => ovrOf(b) - ovrOf(a))) {
+    // 母馬主動：已完賽且未主動交配的母馬各挑最佳公馬（公馬作為被選方不受限制）
+    for (const mother of allFemales.filter(h => h.racedThisTurn && !virtualBredFemales.has(h.id))
+                                   .sort((a, b) => ovrOf(b) - ovrOf(a))) {
+      if (remainingCap() <= 0) break;
       if (!allMales.length) break;
       const father = allMales.reduce((best, c) =>
         breedPairScore(c, mother) > breedPairScore(best, mother) ? c : best);
+      virtualBredFemales.add(mother.id);
       pairs.push({ father, mother, primaryId: mother.id });
     }
 
