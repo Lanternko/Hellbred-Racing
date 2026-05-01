@@ -275,8 +275,9 @@
     const step2El = document.getElementById('breed-step2');
     const step2Title = document.getElementById('breed-step2-title');
     // 第一步：已完賽馬匹（公馬未主動配過）
+    const sortByOvrDesc = arr => [...arr].sort((a, b) => ovrOf(b) - ovrOf(a));
     primaryListEl.innerHTML = allPrimary.length
-      ? allPrimary.map(h => breedCardHtml(h, true)).join('')
+      ? sortByOvrDesc(allPrimary).map(h => breedCardHtml(h, true)).join('')
       : `<div class="breed-empty">${capReached ? '本年主動交配已達上限 6 / 6' : '無已完賽馬匹可交配'}</div>`;
     // 第二步：選定主動方後才啟用；被選方無參賽限制
     if (!primary) {
@@ -289,7 +290,7 @@
       step2El.style.pointerEvents = '';
       step2Title.textContent = `配對對象（${primary.gender === 'male' ? '母馬' : '公馬'}）`;
       secondaryListEl.innerHTML = secondaryPool.length
-        ? secondaryPool.map(h => breedCardHtml(h, false)).join('')
+        ? sortByOvrDesc(secondaryPool).map(h => breedCardHtml(h, false)).join('')
         : `<div class="breed-empty">無${primary.gender === 'male' ? '母馬' : '公馬'}可配對</div>`;
     }
 
