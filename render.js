@@ -17,43 +17,41 @@
     const SEG_LABEL = { straight:'直', mildCurve:'彎', hairpin:'夾', climb:'坡', descent:'落', sprint:'衝', finished:'✓' };
 
     function buildBar(progress) {
-      const B = 14, f = Math.round(Math.min(progress, 1) * B);
+      const B = 10, f = Math.round(Math.min(progress, 1) * B);
       return '▓'.repeat(f) + '░'.repeat(B - f);
     }
 
-    // 中文字在 monospace 占 2 cols，padEnd 用 char 數會錯位 — 改用 visual width
-    function padCols(s, cols) {
-      let w = 0;
-      for (const ch of s) w += /[　-鿿＀-｠]/.test(ch) ? 2 : 1;
-      return s + ' '.repeat(Math.max(0, cols - w));
-    }
-
-    function row(label, pos, vel, segKind, length) {
-      const progress = Math.min(pos / length, 1);
-      const v   = String(Math.round(vel)).padStart(2);
-      const seg = SEG_LABEL[segKind] || '·';
-      return `${padCols(label, 10)} ${buildBar(progress)} ${String(Math.round(pos)).padStart(4)}m v${v} ${seg}`;
+    // flex 欄式：rank / name / bar / meta，對齊不再依賴 monospace + CJK 寬度
+    function buildRows(tk) {
+      const hLead = tk.hPos >= tk.ePos;
+      const rank = (isPlayer) => isPlayer ? (hLead ? '1' : '2') : (hLead ? '2' : '1');
+      const meta = (pos, vel, segKind) =>
+        `${String(Math.round(pos)).padStart(4)}m  v${String(Math.round(vel)).padStart(2)}  ${SEG_LABEL[segKind] || '·'}`;
+      const html = (rk, name, pos, vel, segKind, length) => `
+        <div class="race-row">
+          <span class="race-rank">${rk}│</span>
+          <span class="race-name">${name}</span>
+          <span class="race-bar">${buildBar(Math.min(pos / length, 1))}</span>
+          <span class="race-meta">${meta(pos, vel, segKind)}</span>
+        </div>`;
+      return html(rank(true),  horse.name,    tk.hPos, tk.hVel, tk.hSeg, track.length) +
+             html(rank(false), opponent.name, tk.ePos, tk.eVel, tk.eSeg, track.length);
     }
 
     function frame() {
       const tk = timeline[Math.min(tickIdx, timeline.length - 1)];
       headerEl.textContent = `${label}  ──  tick ${tk.t}`;
-      const hLead = tk.hPos >= tk.ePos;
-      const hRank = hLead ? '1' : '2', eRank = hLead ? '2' : '1';
-      trackEl.textContent =
-        `${hRank}│ ${row(horse.name.slice(0,8),    tk.hPos, tk.hVel, tk.hSeg, track.length)}\n` +
-        `${eRank}│ ${row(opponent.name.slice(0,8), tk.ePos, tk.eVel, tk.eSeg, track.length)}`;
-      const recent = timeline.slice(Math.max(0, tickIdx-1), tickIdx+1).flatMap(f => f.events);
-      eventsEl.textContent = recent.slice(-2).join('  ');
+      trackEl.innerHTML = buildRows(tk);
+      // 累積近 3 tick 的 events，避免一閃即逝
+      const recent = timeline.slice(Math.max(0, tickIdx-2), tickIdx+1).flatMap(f => f.events);
+      eventsEl.textContent = recent.slice(-3).join('   ');
     }
 
     function finish() {
       clearInterval(_raceAnimTimer); _raceAnimTimer = null;
       const tk = timeline[timeline.length - 1];
       headerEl.textContent = `${label}  ──  ${won ? '🏆 勝利!' : '💀 落敗'}`;
-      trackEl.textContent =
-        `${won ? '1' : '2'}│ ${row(horse.name.slice(0,8),    tk.hPos, tk.hVel, tk.hSeg, track.length)}\n` +
-        `${won ? '2' : '1'}│ ${row(opponent.name.slice(0,8), tk.ePos, tk.eVel, tk.eSeg, track.length)}`;
+      trackEl.innerHTML = buildRows(tk);
       skipBtn.onclick = null;
       setTimeout(() => { overlay.classList.remove('open'); onComplete(); }, 400);
     }

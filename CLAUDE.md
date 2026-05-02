@@ -72,7 +72,7 @@ Stage A + B + C + D + E + F + 命名系統 + 卡片系統已實作；codebase �
 > **解凍條件**（量化，缺一不可）：自己連玩 ≥ 5 場 30 回合 + ≥ 3 場主動「再開一局」 + 至少 1 個朋友玩 1 場後不靠講解能知道下一步該做什麼。詳見 [prompts/tinyprd.md](prompts/tinyprd.md) `Done = ?`。
 
 ## Game invariants（程式級不變式，三個 step 都不可違反）
-- **老化僅在賽事回合（小賽事/大典）完賽後觸發**：`advanceFromRacing()` 統一老化；活動回合不老化。1 歲入場馬保證至少可參賽 3 次。
+- **老化在「賽事 turn breeding 完成 → 下一年」的瞬間觸發**：`nextTurn()` 開頭檢查 `game.subPhase === 'breeding'` 才呼叫 `ageAllHorses()`；活動 turn (`subPhase === null`) 維持不老化。Why: 讓 age-4 馬最後一年既能比賽也能交配，再升靈魂區；避免「賽完當下死亡」的突兀感。1 歲入場馬保證至少可參賽 3 次並可在死前留下 1 胎。
 - 馬匹性別在出生時隨機 50/50 決定後終身不變。
 - 三圍（速度 / 力量 / 體力）clamp 在 1–100，任何運算（含突變 / 劣化）後超出都要 clip。例外：**印記 M01 無瑕之眼** 將該馬速度上限提升至 115。
 - 5 歲從 active 或 bench 移除，進入靈魂區（`game.souls`）；靈魂區無上限，不參與日常賽事與交配。

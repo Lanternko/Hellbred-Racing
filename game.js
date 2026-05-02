@@ -444,6 +444,12 @@
 
   function nextTurn() {
     if (game.yearsElapsed >= game.maxYears) return;
+    // 老化在「賽事 turn breeding 完成 → 下一年」的瞬間觸發。
+    // Why: 讓 age-4 馬在最後一年既能比賽也能交配，再升入靈魂區。
+    // 活動 turn (subPhase === null) 維持不老化，避免老化頻率翻倍打壞數值平衡。
+    if (game.subPhase === 'breeding') {
+      ageAllHorses();
+    }
     game.yearsElapsed += game.yearPerTurn;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -565,7 +571,6 @@
   }
   function advanceFromRacing() {
     if (game.subPhase !== 'racing') return;
-    ageAllHorses(); // 賽事結束才老化，確保 age-4 馬能出賽後才退役
     game.subPhase = 'breeding';
     render();
   }
@@ -842,31 +847,69 @@
     const eClimateForSeg = { curvePenaltyMul: eClim.curvePenaltyMul };
 
     // === Runtime ===
-    const h = { pos: 0, vel: 0, stam: hPool, finished: false, finishTick: null };
-    const e = { pos: 0, vel: 0, stam: ePool, finished: false, finishTick: null };
+    const h = { pos: 0, vel: 0, stam: hPool, finished: false, finishTick: null,
+                fired: { goodStart:false, topSpeed:false, sprint:false, fatigue:false }, lastSeg:null };
+    const e = { pos: 0, vel: 0, stam: ePool, finished: false, finishTick: null,
+                fired: { goodStart:false, topSpeed:false, sprint:false, fatigue:false }, lastSeg:null };
     const timeline = [];
     const finishOrder = []; // 'h' or 'e'
+    const horseSkillName = horse.skill?.name;
 
-    function step(rt, maxSpeed, accel, pool, drainBaseMul, climateForSeg, P, isPlayer) {
+    function step(rt, maxSpeed, accel, pool, drainBaseMul, climateForSeg, P, isPlayer, tick) {
       const seg = getSegmentAt(track, rt.pos);
       const beh = segmentBehavior(seg, P, climateForSeg);
       const fatigueRatio = rt.stam / pool;
-      const fatigue = fatigueRatio < 0 ? 0.55 : (fatigueRatio < 0.30 ? 0.85 : 1.00);
+      const lowFatigue = fatigueRatio < 0.30;
+      const fatigue = fatigueRatio < 0 ? 0.55 : (lowFatigue ? 0.85 : 1.00);
       const events = [];
       const cap = maxSpeed * beh.capMul;
       const target = cap * fatigue * (0.97 + rng() * 0.06);
       const dv = clamp(target - rt.vel, -accel * 1.5, accel);
+      const prevVel = rt.vel;
       rt.vel = Math.max(0, rt.vel + dv);
       rt.pos += rt.vel;
       const drain = STAT_FORMULA.drainAtSpeed(rt.vel) * beh.drainMul * drainBaseMul;
       rt.stam = rt.stam - drain + beh.recover;
+
+      // === 戰況事件偵測（玩家馬才播報，避免太吵）===
+      if (isPlayer) {
+        const who = horse.name.slice(0, 6);
+        // 起跑成功：開賽 8 tick 內衝過 maxSpeed × 0.7
+        if (!rt.fired.goodStart && tick <= 8 && rt.vel >= maxSpeed * 0.70) {
+          rt.fired.goodStart = true;
+          events.push(`🚀 ${who} 起跑成功`);
+        }
+        // 達到頂速：首次跨 maxSpeed × 0.95
+        if (!rt.fired.topSpeed && rt.vel >= maxSpeed * 0.95) {
+          rt.fired.topSpeed = true;
+          const tag = horseSkillName === '疾風' ? `（✨ 疾風發動）` : '';
+          events.push(`⚡ ${who} 達到頂速${tag}`);
+        }
+        // 進入衝刺段（一次性）
+        if (!rt.fired.sprint && seg.kind === 'sprint') {
+          rt.fired.sprint = true;
+          events.push(`🔥 ${who} 進入衝刺`);
+        }
+        // 過彎掉速：進入髮夾且 vel 比上一 tick 跌 ≥ 1
+        if (rt.lastSeg !== 'hairpin' && seg.kind === 'hairpin' && prevVel - rt.vel >= 1) {
+          const tag = horseSkillName === '霸力' ? `（✨ 霸力穩住）` : '';
+          events.push(`🌀 ${who} 過髮夾${tag}`);
+        }
+        // 體力崩盤：首次跌破 30%
+        if (!rt.fired.fatigue && lowFatigue) {
+          rt.fired.fatigue = true;
+          const tag = horseSkillName === '鋼魂' ? `（✨ 鋼魂硬撐）` : '';
+          events.push(`💢 ${who} 體力崩盤${tag}`);
+        }
+      }
+      rt.lastSeg = seg.kind;
       return { seg, events };
     }
 
     let t = 0;
     for (; t < RACE_TICK_CAP; t++) {
-      const hStep = h.finished ? null : step(h, hMaxSpeed, hAccel, hPool, hClim.drainMul, hClimateForSeg, hStats.power, true);
-      const eStep = e.finished ? null : step(e, eMaxSpeed, eAccel, ePool, eClim.drainMul, eClimateForSeg, eStats.power, false);
+      const hStep = h.finished ? null : step(h, hMaxSpeed, hAccel, hPool, hClim.drainMul, hClimateForSeg, hStats.power, true,  t);
+      const eStep = e.finished ? null : step(e, eMaxSpeed, eAccel, ePool, eClim.drainMul, eClimateForSeg, eStats.power, false, t);
 
       // 衝線檢查 — 同 tick 多人衝線時用 overshoot 排序避免系統性偏袒玩家
       const hCrossing = !h.finished && h.pos >= track.length;

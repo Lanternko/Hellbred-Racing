@@ -829,24 +829,25 @@
     padding: 10px 14px;
     margin-top: 2px;
   }
-  .vet-name { font-size: 10px; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 5px; }
+  .vet-name { font-size: 11px; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 5px; font-weight: 700; }
   .vet-text { font-size: 12px; line-height: 1.7; color: var(--text-dim); font-style: italic; }
-  /* 5 級：優良(gold) > 佳選(good) > 普通(normal) > 差(medium) > 爛(high) */
-  .vet-advice.sev-gold   { border-color: rgba(249,194,43,.55); background: rgba(249,194,43,.06); }
-  .vet-advice.sev-gold   .vet-name { color: var(--gold); }
-  .vet-advice.sev-gold   .vet-text { color: var(--gold); }
-  .vet-advice.sev-good   { border-color: rgba(110,200,140,.45); background: rgba(110,200,140,.05); }
-  .vet-advice.sev-good   .vet-name { color: #8cd6a3; }
-  .vet-advice.sev-good   .vet-text { color: #b9e3c7; }
-  .vet-advice.sev-normal { border-color: rgba(170,170,180,.25); }
-  .vet-advice.sev-normal .vet-name { color: #b6b6c0; }
-  .vet-advice.sev-normal .vet-text { color: #c8c8d0; }
-  .vet-advice.sev-medium { border-color: rgba(234,140,54,.45); background: rgba(234,140,54,.05); }
-  .vet-advice.sev-medium .vet-name { color: #e8a96a; }
-  .vet-advice.sev-medium .vet-text { color: #e8b888; }
-  .vet-advice.sev-high   { border-color: rgba(200,55,80,.55); background: rgba(200,55,80,.06); }
-  .vet-advice.sev-high   .vet-name { color: #ec6b87; }
-  .vet-advice.sev-high   .vet-text { color: #f08aa0; }
+  /* 5 級：優良(gold) > 佳選(good) > 普通(normal) > 差(medium) > 爛(high) — 邊框 2px + 左色塊 + 配色 */
+  .vet-advice { border-width: 1px; border-left-width: 4px; }
+  .vet-advice.sev-gold   { border-color: #f9c22b; background: rgba(249,194,43,.14); }
+  .vet-advice.sev-gold   .vet-name { color: #ffd84a; }
+  .vet-advice.sev-gold   .vet-text { color: #ffe27a; }
+  .vet-advice.sev-good   { border-color: #3ca370; background: rgba(60,163,112,.14); }
+  .vet-advice.sev-good   .vet-name { color: #6fdca0; }
+  .vet-advice.sev-good   .vet-text { color: #a4ebc1; }
+  .vet-advice.sev-normal { border-color: #8b9bb4; background: rgba(139,155,180,.10); }
+  .vet-advice.sev-normal .vet-name { color: #c0cbdc; }
+  .vet-advice.sev-normal .vet-text { color: #d6dde8; }
+  .vet-advice.sev-medium { border-color: #ea4f36; background: rgba(234,79,54,.16); }
+  .vet-advice.sev-medium .vet-name { color: #ff8a6e; }
+  .vet-advice.sev-medium .vet-text { color: #ffb499; }
+  .vet-advice.sev-high   { border-color: #ad2f45; background: rgba(173,47,69,.22); }
+  .vet-advice.sev-high   .vet-name { color: #ff5c7a; }
+  .vet-advice.sev-high   .vet-text { color: #ff8aa3; }
 
   /* 馬匹清單 Modal */
   .modal-overlay {
@@ -1051,8 +1052,13 @@
     font-family: 'Courier New', monospace;
   }
   .race-anim-header { color: #c8b8f8; font-size: 13px; margin-bottom: 16px; letter-spacing: .05em; }
-  .race-anim-track  { color: #e0e0ff; font-size: 13px; line-height: 1.9; margin-bottom: 12px; white-space: pre; }
-  .race-anim-events { color: #a0b0d0; font-size: 11px; min-height: 1.4em; margin-bottom: 14px; }
+  .race-anim-track  { color: #e0e0ff; font-size: 13px; line-height: 1.7; margin-bottom: 12px; }
+  .race-row { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
+  .race-rank { width: 18px; flex: 0 0 auto; opacity: .85; }
+  .race-name { width: 70px; flex: 0 0 auto; overflow: hidden; text-overflow: ellipsis; }
+  .race-bar  { flex: 1 1 auto; letter-spacing: 0; font-family: 'Courier New', monospace; overflow: hidden; }
+  .race-meta { flex: 0 0 auto; margin-left: 4px; opacity: .9; font-variant-numeric: tabular-nums; font-family: 'Courier New', monospace; }
+  .race-anim-events { color: #f9c22b; font-size: 12px; min-height: 1.6em; margin-bottom: 14px; letter-spacing: .04em; }
   .race-anim-controls { display: flex; justify-content: space-between; align-items: center; }
   .race-skip-btn {
     background: transparent; border: 1px solid #4a4a6a;

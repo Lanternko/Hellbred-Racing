@@ -16,3 +16,12 @@
 - 量化：
 - 猜測：
 - 下一輪：
+
+---
+
+## 2026-05-02 — 老化時機調整（design change，非 playtest）
+- **觸發**：本人回報「比賽完成，突然馬兒就死了」— 4 歲馬賽完當下被 `advanceFromRacing()` 老化到 5 歲，當回合 breeding 來不及配，血脈斷掉。
+- **改動**：`ageAllHorses()` 從 `advanceFromRacing()` 移到 `nextTurn()` 開頭，gated by `game.subPhase === 'breeding'`。活動 turn 維持不老化。
+- **Game invariant 同步更新**：CLAUDE.md 第一條 invariant 改寫，新增「死前可留 1 胎」保證。
+- **預期影響**：4 歲馬最後一年可貢獻一胎 → 玩家保留老血脈策略性提升；老化頻率不變（仍 2 race turns / 6-turn cycle）→ 數值平衡不受影響。
+- **下一輪要觀察**：是否真的會優先操作 4 歲馬「先賽後配」？若幾乎不用，代表這個改動價值低；若濫用，可能要考慮對 age-4 主動交配加額外限制。

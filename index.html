@@ -165,10 +165,14 @@
 </div>
 
 <!-- Load order: names → card → data → game → render. data/game/render share global lexical scope so const/let cross files; render.js calls init() at end. -->
-<script src="names.js"></script>
-<script src="card.js"></script>
-<script src="data.js"></script>
-<script src="game.js"></script>
-<script src="render.js"></script>
+<!-- 加 ?v=Date.now() 透過 inline script 動態 inject，避免瀏覽器快取舊版 JS（純文字 HTML 開發迴圈會踩到）-->
+<script>
+  (function () {
+    const v = Date.now();
+    ['names.js', 'card.js', 'data.js', 'game.js', 'render.js'].forEach(src => {
+      document.write(`<script src="${src}?v=${v}"><\/script>`);
+    });
+  })();
+</script>
 </body>
 </html>
